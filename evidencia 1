@@ -1,4 +1,10 @@
-print("hola") 
-print("adios")
-print("hola") 
-print("adios")
+import datetime as dt 
+bandera_principal=True
+notas_borradas = [9]
+fecha_actual = dt.date.today()
+numero_folio = 5
+notas_taller = {1: ("Vinicius", ["Aire a llantas", "Ajuste de frenos"], dt.date(2023, 8, 29), 400.20),
+                2: ("Cerati", ["Cambio de aceite", "Mantenimiento general", "Cambio de batería"], dt.date(2023, 8, 27), 3000.75),
+                3: ("Bukowski", ["Cambio de frenos"], dt.date(2023, 6, 20), 1500.0),
+                4: ("Lacan", ["Reparación de motor", "Cambio de llantas"], dt.date(2023, 8, 10), 1200.24),
+                5: ("Jung", ["Mantenimiento general"], dt.date(2022, 10, 23), 1000.0)}
