@@ -34,3 +34,18 @@ while bandera_principal:
             else:
                 break
         numero_folio+=1
+        while True:
+            try:
+                fecha_registro_nota=input("Ingrese su fecha con el formato (dd/mm/aaaa): ")#SE PIDE LA FECHA DEL USUARIO
+                if fecha_registro_nota.strip()=="":
+                    print("EL DATO NO DEBE DE OMITIRSE")
+                    continue
+                fecha_procesada = dt.datetime.strptime(fecha_registro_nota, "%d/%m/%Y").date()
+            except ValueError:
+                print("El dato ingresado no cumple con el patron (dd/mm/yy)")
+                continue
+            if fecha_procesada<fecha_actual:            #SE VERIFICA QUE LA FECHA NO SEA ANTERIOR A LA ACTUAL
+                print("La fecha que usted ingreso es invalida, su fecha no debe ser anterior a la actual")  
+                continue
+            else: 
+                break
