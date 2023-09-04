@@ -8,3 +8,29 @@ notas_taller = {1: ("Vinicius", ["Aire a llantas", "Ajuste de frenos"], dt.date(
                 3: ("Bukowski", ["Cambio de frenos"], dt.date(2023, 6, 20), 1500.0),
                 4: ("Lacan", ["Reparación de motor", "Cambio de llantas"], dt.date(2023, 8, 10), 1200.24),
                 5: ("Jung", ["Mantenimiento general"], dt.date(2022, 10, 23), 1000.0)}
+detalles_precio = []
+detalles_service = []
+def validar_fecha(fecha):
+    try:
+        dt.datetime.strptime(fecha, "%d/%m/%Y")
+        return True
+    except ValueError:
+        return False
+while bandera_principal:
+  print("\n|***********|")
+  print("BIENVENIDO A TALLER PITONICO \n")
+  try:
+        decision_menu = int(input("QUE OPCION DESEA ELEGIR \n \n1-Registrar una nota \n2-Consultas y reportes \n3-Cancelar nota \n4-Recuperar nota \n5-Salir del sistema \n"))
+    except ValueError:
+        print("Por favor, ingrese un número válido.")
+        continue
+  if decision_menu ==1:   #DATOS A PEDIR \NOMBRE y \SERVICIO(S), SE CALCULA EL TOTAL A PAGAR
+        print(f"ELIGIO LA OPCION DE REGISTRO DE NOTA\n")   ##EL USUARIO DEBE TECLEAR EL NOOMBRE DE LOS SERVICIOS   
+        while True:
+            nombre_registro=input("Ingrese su nombre: ")       ##Y CAMBIAR LA BUSQUEDA POR ENTEROS
+            if nombre_registro.strip()=="":
+                print("EL DEBE NO DEBE ESTAR EN BLANCO")
+                continue
+            else:
+                break
+        numero_folio+=1
