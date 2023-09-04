@@ -49,3 +49,34 @@ while bandera_principal:
                 continue
             else: 
                 break
+        while True:   #SE PREGUNTARAM LOS SERVICIOS A ELEGIR
+            nombre_de_servicio_realizado=input("Ingresa los detalles de la nota: ")       #NO DEBE OMITIRSE
+            if nombre_de_servicio_realizado.strip()=="":            #VALIDACION PARA QUE NO SE OMITA
+                print("El campo no debe de estar vacio, favor de ingresar de nuevo")
+                continue
+            while True:    
+                try:    
+                    precio_detalle_service=float(input("Ingrese el precio del servicio: "))        
+                    if precio_detalle_service <=0:
+                        print("El precio debe de ser mayor que cero, ingrese de nuevo el valor")
+                        continue
+                    else: 
+                        break
+                except ValueError:
+                    print("EL DATO QUE DEBE DE SER NUMERICO")
+                    continue
+            detalles_service.append(nombre_de_servicio_realizado)  #INGRESAN DETALLES TIPO STR
+            detalles_precio.append(precio_detalle_service)#INGRESAN EL COSTO X SERVICIO FLOAT
+            while True:
+                servicio_extra=input("¿Desesa agregar otro servicio? SI/NO: ") 
+                if servicio_extra.strip()=="":
+                    print("EL DATO NO DEBE DE OMITIRSE")
+                    continue
+                elif servicio_extra.upper()=="NO":
+                    break
+                elif servicio_extra.upper()=="SI":
+                    break
+            
+                else:
+                    print("DEBE SUMPLIR CON EL PATRON SI/NO")
+                    continue
