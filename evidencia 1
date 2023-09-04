@@ -80,3 +80,26 @@ while bandera_principal:
                 else:
                     print("DEBE SUMPLIR CON EL PATRON SI/NO")
                     continue
+              if servicio_extra.upper()=="SI":
+                continue
+            else:       #SI LLEGO HASTA AQUI ES POR QUE PROPOCIONO TODOS LOS DATOS NECESARIOS
+                print()
+                tot=0
+                print(f'|{"NOTA":^28}|')            ###TODA ESTA ESTRUCTURA NO ES NECESARIA
+                print(f'{"="*30}')                  ###PERO SIRVE COMO VISUALIZADOR DE LA NOTA
+                print(f"Folio: {numero_folio}")     
+                print(f'|Fecha: {fecha_procesada}\t     |') #FECHA PROPOCIONADA POR EL USUARIO      
+                print(f'|Cliente: {nombre_registro:<19}|')
+                for service,precio in zip(detalles_service,detalles_precio):  
+                        print(f'|Servicio: {service:<18} {precio}|')
+                for b in detalles_precio:      #LOS VALORES DE LOS SERVICIOS DE SUMAN PARA DAR EL TOTAL
+                    tot+=b
+                print(f'|Total: {tot:<18}|')
+                notas_taller[numero_folio]=(fecha_procesada,nombre_registro,tot,[i for i in detalles_service],detalles_precio)
+                #AQUI SE AGREGAN LOS ELEMENTOS AL DICCIONARIO
+                
+                print("\nLA NOTA SE HA REGISTRADO EXITOSAMENTE")
+                print(notas_taller.get(numero_folio))
+                detalles_precio.clear()
+                detalles_service.clear()
+                break
