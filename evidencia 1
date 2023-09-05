@@ -104,8 +104,65 @@ while bandera_principal:
                 detalles_service.clear()
                 break
 
+    elif decision_menu == 2:
+        while True:
+            submenu = input("Qué opción desea seleccionar:\n1-Consulta por periodo\n2-Consulta por folio\n")
+            if submenu.strip()=="":
+                print("EL DATO NO DEBE DE OMITIRSE")
+                continue
+            else:
+                break
+        if submenu.upper() == "CONSULTA POR PERIODO":
+            while True:
+                fecha_inicio = input("Ingrese la fecha inicial del periodo, en formato dd/mm/aaaa:\n")
+                if fecha_inicio.strip()=="":
+                    print("EL DATO NO DEBE DE OMITIRSE, FAVOR DE INGRESAR DE NUEVO")
+                    continue   
+                else:
+                    break
+            while True:             
+                fecha_final = input("Ingrese la fecha final del periodo, en formato dd/mm/aaaa:\n")
+                if fecha_final.strip()=="":
+                    print("EL DATO NO DEBE DE OMITIRSE, VUELVA A INGRESAR LA FECHA")
+                    continue
+                else:
+                    break
+            while True:
+                if not validar_fecha(fecha_inicio) or not validar_fecha(fecha_final):
+                    print("Formato de fecha incorrecto. Utilice dd/mm/aaaa.")
+                    break           #TE MANDA AL MENU PRICNIPAL
 
+                fecha_inicio = dt.datetime.strptime(fecha_inicio, "%d/%m/%Y").date()
+                fecha_final = dt.datetime.strptime(fecha_final, "%d/%m/%Y").date()
 
+                notas_periodo = {folio: nota for folio, nota in notas_taller.items() if
+                                 fecha_inicio <= nota[2] <= fecha_final and folio not in notas_borradas}
+
+                if notas_periodo:
+                    print("Notas correspondientes al período:")
+                    for folio, nota in notas_periodo.items():
+                        print(f"Folio: {folio}")
+                        print(f"Fecha: {nota[2]}")
+                        print(f"Cliente: {nota[0]}")
+                        print(f"Total: ${nota[3]}")
+                        print("-" * 30)
+                else:
+                    print("No hay notas emitidas para dicho período.")
+                break
+
+        if submenu.upper() == "CONSULTA POR FOLIO":
+            if submenu.strip() == "":
+                print("NO PUEDE DEJAR CASILLAS VACIAS")
+            try:
+                consulta_folio = int(input("Ingrese el folio a consultar:\n"))
+                if consulta_folio in notas_taller.keys() and consulta_folio not in notas_borradas:
+                    print("FOLIO EXISTENTE")
+                    print(notas_taller.get(consulta_folio))
+                else:
+                    print("FOLIO NO EXISTENTE O NO SE ENCUENTRA EN EL SISTEMA")
+            except ValueError:
+                print("Por favor, ingrese un número válido para el folio.")
+                continue
 
 
   elif decision_menu == 3:
