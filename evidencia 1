@@ -108,32 +108,70 @@ while bandera_principal:
 
 
 
-elif decision_menu == 3:
-        print("INGRESO A LA OPCION CANCELAR")
+  elif decision_menu == 3:
+          print("INGRESO A LA OPCION CANCELAR")
+          while True:
+              try:
+                  nota_a_cancelar = int(input("Ingrese el folio: "))
+                  if nota_a_cancelar in notas_borradas:
+                      print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA O ESTÁ ELIMINADA")
+                  elif nota_a_cancelar in notas_taller.keys():
+                      print("LA LLAVE QUE INGRESÓ ESTÁ EN EL DICCIONARIO")
+                      print(notas_taller.get(nota_a_cancelar))
+                      while True:
+                          confirmacion = input("CONFIRME SI DESEA ELIMINAR LA NOTA (SI/NO): ")
+                          if confirmacion.strip()=="":
+                              print("EL DATO NO DEBE DE OMITIRSE, INGRESELO DE NUEVO")
+                              continue
+                          else:
+                              break
+                      if confirmacion.upper() == "SI":
+                          notas_borradas.append(nota_a_cancelar)
+                          print("LA NOTA SE HA BORRADO EXITOSAMENTE")
+                      elif confirmacion.upper() == "NO":
+                          print("LA NOTA NO SE HA CANCELADO")
+                  else:
+                      print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA")
+              except ValueError:
+                  print("Por favor, ingrese un número válido para el folio.")
+                  continue
+              else:
+                  break
+  elif decision_menu == 4:
+        print("OPCIÓN RECUPERAR NOTA")
         while True:
+            notas_canceladas_existen = False #Aqui se inicia la variable como falsa 
+            print("LAS SIGUIENTES NOTAS ESTÁN CANCELADAS")
+            for folio, nota in notas_taller.items():
+                if folio in notas_borradas:
+                    print(f"Folio: {folio}")
+                    notas_canceladas_existen = True  # Aqui, si hay notas canceladas se le da el valor de verdadera, si no, se queda como falsa
+
+            if not notas_canceladas_existen: 
+                print("No hay notas canceladas")
+                break
+            
+            decision_recuperar_nota = input("¿DESEA RECUPERAR ALGUNA NOTA DE LAS PRESENTADAS? (SI/NO): ")
+            if decision_recuperar_nota.upper() == "NO":
+                break
             try:
-                nota_a_cancelar = int(input("Ingrese el folio: "))
-                if nota_a_cancelar in notas_borradas:
-                    print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA O ESTÁ ELIMINADA")
-                elif nota_a_cancelar in notas_taller.keys():
-                    print("LA LLAVE QUE INGRESÓ ESTÁ EN EL DICCIONARIO")
-                    print(notas_taller.get(nota_a_cancelar))
-                    while True:
-                        confirmacion = input("CONFIRME SI DESEA ELIMINAR LA NOTA (SI/NO): ")
-                        if confirmacion.strip()=="":
-                            print("EL DATO NO DEBE DE OMITIRSE, INGRESELO DE NUEVO")
-                            continue
-                        else:
-                            break
-                    if confirmacion.upper() == "SI":
-                        notas_borradas.append(nota_a_cancelar)
-                        print("LA NOTA SE HA BORRADO EXITOSAMENTE")
-                    elif confirmacion.upper() == "NO":
-                        print("LA NOTA NO SE HA CANCELADO")
+                recuperar_nota = int(input("FOLIO A RECUPERAR: "))
+                if recuperar_nota in notas_borradas:
+                    for folio, nota in notas_taller.items():
+                        if folio == recuperar_nota:
+                            print(f"Folio: {folio}  Cliente: {nota[0]} Fecha: {nota[2]} Total a pagar: {nota[3]}")
+
+                    decision_recuperar = input("CONFIRME SI DESEA RECUPERAR LA NOTA (SI/NO): ")
+                    if decision_recuperar.upper() == "SI":
+                        notas_borradas.remove(recuperar_nota)
+                        print("LA NOTA SE HA RECUPERADO EXITOSAMENTE")
                 else:
-                    print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA")
+                    print("EL FOLIO QUE INGRESÓ NO ESTÁ EN NOTAS ELIMINADAS")
             except ValueError:
                 print("Por favor, ingrese un número válido para el folio.")
                 continue
-            else:
-                break
+
+    elif decision_menu == 5:
+        break
+    else:
+        print("Opción no válida. Por favor, seleccione una opción válida.")
