@@ -103,3 +103,37 @@ while bandera_principal:
                 detalles_precio.clear()
                 detalles_service.clear()
                 break
+
+
+
+
+
+elif decision_menu == 3:
+        print("INGRESO A LA OPCION CANCELAR")
+        while True:
+            try:
+                nota_a_cancelar = int(input("Ingrese el folio: "))
+                if nota_a_cancelar in notas_borradas:
+                    print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA O ESTÁ ELIMINADA")
+                elif nota_a_cancelar in notas_taller.keys():
+                    print("LA LLAVE QUE INGRESÓ ESTÁ EN EL DICCIONARIO")
+                    print(notas_taller.get(nota_a_cancelar))
+                    while True:
+                        confirmacion = input("CONFIRME SI DESEA ELIMINAR LA NOTA (SI/NO): ")
+                        if confirmacion.strip()=="":
+                            print("EL DATO NO DEBE DE OMITIRSE, INGRESELO DE NUEVO")
+                            continue
+                        else:
+                            break
+                    if confirmacion.upper() == "SI":
+                        notas_borradas.append(nota_a_cancelar)
+                        print("LA NOTA SE HA BORRADO EXITOSAMENTE")
+                    elif confirmacion.upper() == "NO":
+                        print("LA NOTA NO SE HA CANCELADO")
+                else:
+                    print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA")
+            except ValueError:
+                print("Por favor, ingrese un número válido para el folio.")
+                continue
+            else:
+                break
