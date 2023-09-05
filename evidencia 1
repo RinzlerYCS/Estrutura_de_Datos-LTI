@@ -1,30 +1,28 @@
-import datetime as dt 
+import collections
+import datetime as dt
 bandera_principal=True
-notas_borradas = [9]
-fecha_actual = dt.date.today()
-numero_folio = 5
-notas_taller = {1: ("Vinicius", ["Aire a llantas", "Ajuste de frenos"], dt.date(2023, 8, 29), 400.20),
-                2: ("Cerati", ["Cambio de aceite", "Mantenimiento general", "Cambio de batería"], dt.date(2023, 8, 27), 3000.75),
-                3: ("Bukowski", ["Cambio de frenos"], dt.date(2023, 6, 20), 1500.0),
-                4: ("Lacan", ["Reparación de motor", "Cambio de llantas"], dt.date(2023, 8, 10), 1200.24),
-                5: ("Jung", ["Mantenimiento general"], dt.date(2022, 10, 23), 1000.0)}
-detalles_precio = []
-detalles_service = []
+notas_borradas=[2,3]
+fecha_actual=dt.date.today()
 def validar_fecha(fecha):
     try:
         dt.datetime.strptime(fecha, "%d/%m/%Y")
         return True
     except ValueError:
         return False
+
+numero_folio=5         #PODEMOS TENER 5 NOTAS EN EL REGISTRO
+notas_taller={1:(dt.date(2023,8,29),"Vinicius",400.20,["Aire a llantas","Ajuste de frenos"],[150.0,250.20]),
+              2:(dt.date(2023,8,27),"Cerati",3000.75,["Cambio de aceite","Mantenimiento general","Cambio de bateria"],[1500.25,1000.25,500.25]),
+              3:(dt.date(2023,6,20),"Bukowski",1500.0,["Cambio de frenos"],[1500.0]),
+              4:(dt.date(2023,8,10),"Lacan",1200.24,["Reparacion de motor", "Cambio de llantas"],[400.04,800.2]),
+              5:(dt.date(2022,10,23),"Jung",1000.0,["Mantenimiento general"],[1000])}
+detalles_precio=list()
+detalles_service=list()
 while bandera_principal:
-  print("\n|***********|")
-  print("BIENVENIDO A TALLER PITONICO \n")
-  try:
-        decision_menu = int(input("QUE OPCION DESEA ELEGIR \n \n1-Registrar una nota \n2-Consultas y reportes \n3-Cancelar nota \n4-Recuperar nota \n5-Salir del sistema \n"))
-    except ValueError:
-        print("Por favor, ingrese un número válido.")
-        continue
-  if decision_menu ==1:   #DATOS A PEDIR \NOMBRE y \SERVICIO(S), SE CALCULA EL TOTAL A PAGAR
+    print("\n|***********|")
+    print("BIENVENIDO A TALLER PITONICO \n")
+    decision_menu=int(input("QUE OPCION DESEA ELEGIR \n \n1-Registrar una nota \n2-Consultas y reportes \n3-Cancelar nota \n4-Recuperar nota \n5-Salir del sistema \n"))
+    if decision_menu ==1:   #DATOS A PEDIR \NOMBRE y \SERVICIO(S), SE CALCULA EL TOTAL A PAGAR
         print(f"ELIGIO LA OPCION DE REGISTRO DE NOTA\n")   ##EL USUARIO DEBE TECLEAR EL NOOMBRE DE LOS SERVICIOS   
         while True:
             nombre_registro=input("Ingrese su nombre: ")       ##Y CAMBIAR LA BUSQUEDA POR ENTEROS
@@ -45,12 +43,15 @@ while bandera_principal:
                 print("El dato ingresado no cumple con el patron (dd/mm/yy)")
                 continue
             if fecha_procesada<fecha_actual:            #SE VERIFICA QUE LA FECHA NO SEA ANTERIOR A LA ACTUAL
-                print("La fecha que usted ingreso es invalida, su fecha no debe ser anterior a la actual")  
+                print("La fecha que usted ingreso es invalida, su fecha no debe ser anterior a la aactual")  
                 continue
             else: 
                 break
         while True:   #SE PREGUNTARAM LOS SERVICIOS A ELEGIR
             nombre_de_servicio_realizado=input("Ingresa los detalles de la nota: ")       #NO DEBE OMITIRSE
+            if nombre_de_servicio_realizado.strip()=="SI":
+                print("EL DATO NO DEBE DE OMITIRSE")
+                continue
             if nombre_de_servicio_realizado.strip()=="":            #VALIDACION PARA QUE NO SE OMITA
                 print("El campo no debe de estar vacio, favor de ingresar de nuevo")
                 continue
@@ -64,7 +65,7 @@ while bandera_principal:
                         break
                 except ValueError:
                     print("EL DATO QUE DEBE DE SER NUMERICO")
-                    continue
+                    pass
             detalles_service.append(nombre_de_servicio_realizado)  #INGRESAN DETALLES TIPO STR
             detalles_precio.append(precio_detalle_service)#INGRESAN EL COSTO X SERVICIO FLOAT
             while True:
@@ -80,7 +81,7 @@ while bandera_principal:
                 else:
                     print("DEBE SUMPLIR CON EL PATRON SI/NO")
                     continue
-              if servicio_extra.upper()=="SI":
+            if servicio_extra.upper()=="SI":
                 continue
             else:       #SI LLEGO HASTA AQUI ES POR QUE PROPOCIONO TODOS LOS DATOS NECESARIOS
                 print()
@@ -103,7 +104,6 @@ while bandera_principal:
                 detalles_precio.clear()
                 detalles_service.clear()
                 break
-
     elif decision_menu == 2:
         while True:
             submenu = input("Qué opción desea seleccionar:\n1-Consulta por periodo\n2-Consulta por folio\n")
@@ -136,15 +136,15 @@ while bandera_principal:
                 fecha_final = dt.datetime.strptime(fecha_final, "%d/%m/%Y").date()
 
                 notas_periodo = {folio: nota for folio, nota in notas_taller.items() if
-                                 fecha_inicio <= nota[2] <= fecha_final and folio not in notas_borradas}
+                                 fecha_inicio <= nota[0] <= fecha_final and folio not in notas_borradas}
 
                 if notas_periodo:
                     print("Notas correspondientes al período:")
                     for folio, nota in notas_periodo.items():
                         print(f"Folio: {folio}")
-                        print(f"Fecha: {nota[2]}")
-                        print(f"Cliente: {nota[0]}")
-                        print(f"Total: ${nota[3]}")
+                        print(f"Fecha: {nota[0]}")
+                        print(f"Cliente: {nota[1]}")
+                        print(f"Total: ${nota[2]}")
                         print("-" * 30)
                 else:
                     print("No hay notas emitidas para dicho período.")
@@ -163,51 +163,43 @@ while bandera_principal:
             except ValueError:
                 print("Por favor, ingrese un número válido para el folio.")
                 continue
+    elif decision_menu == 3:
+            print("INGRESO A LA OPCION CANCELAR")
+            while True:
+                try:
+                    nota_a_cancelar = int(input("Ingrese el folio: "))
+                    if nota_a_cancelar in notas_borradas:
+                        print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA O ESTÁ ELIMINADA")
+                    elif nota_a_cancelar in notas_taller.keys():
+                        print("LA LLAVE QUE INGRESÓ ESTÁ EN EL DICCIONARIO")
+                        print(notas_taller.get(nota_a_cancelar))
+                        while True:
+                            confirmacion = input("CONFIRME SI DESEA ELIMINAR LA NOTA (SI/NO): ")
+                            if confirmacion.strip()=="":
+                                print("EL DATO NO DEBE DE OMITIRSE, INGRESELO DE NUEVO")
+                                continue
+                            else:
+                                break
+                        if confirmacion.upper() == "SI":
+                            notas_borradas.append(nota_a_cancelar)
+                            print("LA NOTA SE HA BORRADO EXITOSAMENTE")
+                        elif confirmacion.upper() == "NO":
+                            print("LA NOTA NO SE HA CANCELADO")
+                    else:
+                        print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA")
+                except ValueError:
+                    print("Por favor, ingrese un número válido para el folio.")
+                    continue
+                else:
+                    break
 
-
-  elif decision_menu == 3:
-          print("INGRESO A LA OPCION CANCELAR")
-          while True:
-              try:
-                  nota_a_cancelar = int(input("Ingrese el folio: "))
-                  if nota_a_cancelar in notas_borradas:
-                      print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA O ESTÁ ELIMINADA")
-                  elif nota_a_cancelar in notas_taller.keys():
-                      print("LA LLAVE QUE INGRESÓ ESTÁ EN EL DICCIONARIO")
-                      print(notas_taller.get(nota_a_cancelar))
-                      while True:
-                          confirmacion = input("CONFIRME SI DESEA ELIMINAR LA NOTA (SI/NO): ")
-                          if confirmacion.strip()=="":
-                              print("EL DATO NO DEBE DE OMITIRSE, INGRESELO DE NUEVO")
-                              continue
-                          else:
-                              break
-                      if confirmacion.upper() == "SI":
-                          notas_borradas.append(nota_a_cancelar)
-                          print("LA NOTA SE HA BORRADO EXITOSAMENTE")
-                      elif confirmacion.upper() == "NO":
-                          print("LA NOTA NO SE HA CANCELADO")
-                  else:
-                      print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA")
-              except ValueError:
-                  print("Por favor, ingrese un número válido para el folio.")
-                  continue
-              else:
-                  break
-  elif decision_menu == 4:
+    elif decision_menu == 4:
         print("OPCIÓN RECUPERAR NOTA")
         while True:
-            notas_canceladas_existen = False #Aqui se inicia la variable como falsa 
             print("LAS SIGUIENTES NOTAS ESTÁN CANCELADAS")
             for folio, nota in notas_taller.items():
                 if folio in notas_borradas:
-                    print(f"Folio: {folio}")
-                    notas_canceladas_existen = True  # Aqui, si hay notas canceladas se le da el valor de verdadera, si no, se queda como falsa
-
-            if not notas_canceladas_existen: 
-                print("No hay notas canceladas")
-                break
-            
+                    print(f"Folio: {folio}  Cliente: {nota[0]} Fecha: {nota[2]} Total a pagar: {nota[3]}")
             decision_recuperar_nota = input("¿DESEA RECUPERAR ALGUNA NOTA DE LAS PRESENTADAS? (SI/NO): ")
             if decision_recuperar_nota.upper() == "NO":
                 break
@@ -216,8 +208,7 @@ while bandera_principal:
                 if recuperar_nota in notas_borradas:
                     for folio, nota in notas_taller.items():
                         if folio == recuperar_nota:
-                            print(f"Folio: {folio}  Cliente: {nota[0]} Fecha: {nota[2]} Total a pagar: {nota[3]}")
-
+                            print(f"Folio {folio} Detalles: {nota[1]}")
                     decision_recuperar = input("CONFIRME SI DESEA RECUPERAR LA NOTA (SI/NO): ")
                     if decision_recuperar.upper() == "SI":
                         notas_borradas.remove(recuperar_nota)
@@ -228,6 +219,10 @@ while bandera_principal:
                 print("Por favor, ingrese un número válido para el folio.")
                 continue
 
+    elif decision_menu == 5:
+        break
+    else:
+        print("Opción no válida. Por favor, seleccione una opción válida.")
     elif decision_menu == 5:
         break
     else:
