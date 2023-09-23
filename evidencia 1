@@ -1,5 +1,6 @@
 import collections
 import datetime as dt
+import re
 bandera_principal=True
 notas_borradas=[2,3]
 fecha_actual=dt.date.today()
@@ -11,11 +12,7 @@ def validar_fecha(fecha):
         return False
 
 numero_folio=5         #PODEMOS TENER 5 NOTAS EN EL REGISTRO
-notas_taller={1:(dt.date(2023,8,29),"Vinicius",400.20,["Aire a llantas","Ajuste de frenos"],[150.0,250.20]),
-              2:(dt.date(2023,8,27),"Cerati",3000.75,["Cambio de aceite","Mantenimiento general","Cambio de bateria"],[1500.25,1000.25,500.25]),
-              3:(dt.date(2023,6,20),"Bukowski",1500.0,["Cambio de frenos"],[1500.0]),
-              4:(dt.date(2023,8,10),"Lacan",1200.24,["Reparacion de motor", "Cambio de llantas"],[400.04,800.2]),
-              5:(dt.date(2022,10,23),"Jung",1000.0,["Mantenimiento general"],[1000])}
+notas_taller={}
 detalles_precio=list()
 detalles_service=list()
 while bandera_principal:
@@ -31,6 +28,22 @@ while bandera_principal:
                 continue
             else:
                 break
+        while True:
+                # RFC 
+                patron_rfc = r'^[A-Z&Ñ]{3,4}\d{6}[A-V1-9][A-Z1-9]\d{1}$'
+                rfc_usuario = input("Introduce tu RFC: ")
+                if re.match(patron_rfc, rfc_usuario):
+                    break
+                else:
+                    print("RFC inválido")
+        while True:
+            #CORREO
+            patron_correo = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            correo = input("Ingrese una dirección de correo electrónico: ")
+            if re.match(patron_correo, correo):
+                break
+            else:
+                print("La dirección de correo electrónico no es válida.")
         numero_folio+=1
         while True:
             try:
@@ -83,6 +96,7 @@ while bandera_principal:
                     continue
             if servicio_extra.upper()=="SI":
                 continue
+            
             else:       #SI LLEGO HASTA AQUI ES POR QUE PROPOCIONO TODOS LOS DATOS NECESARIOS
                 print()
                 tot=0
@@ -91,12 +105,14 @@ while bandera_principal:
                 print(f"Folio: {numero_folio}")     
                 print(f'|Fecha: {fecha_procesada}\t     |') #FECHA PROPOCIONADA POR EL USUARIO      
                 print(f'|Cliente: {nombre_registro:<19}|')
+                print(f'|RFC: {rfc_usuario}\t     |')
+                print(f'|RFC: {correo}\t     |')
                 for service,precio in zip(detalles_service,detalles_precio):  
                         print(f'|Servicio: {service:<18} {precio}|')
                 for b in detalles_precio:      #LOS VALORES DE LOS SERVICIOS DE SUMAN PARA DAR EL TOTAL
                     tot+=b
                 print(f'|Total: {tot:<18}|')
-                notas_taller[numero_folio]=(fecha_procesada,nombre_registro,tot,[i for i in detalles_service],detalles_precio)
+                notas_taller[numero_folio]=(fecha_procesada,nombre_registro,rfc_usuario, correo ,tot,[i for i in detalles_service],detalles_precio)
                 #AQUI SE AGREGAN LOS ELEMENTOS AL DICCIONARIO
                 
                 print("\nLA NOTA SE HA REGISTRADO EXITOSAMENTE")
@@ -219,10 +235,6 @@ while bandera_principal:
                 print("Por favor, ingrese un número válido para el folio.")
                 continue
 
-    elif decision_menu == 5:
-        break
-    else:
-        print("Opción no válida. Por favor, seleccione una opción válida.")
     elif decision_menu == 5:
         break
     else:
