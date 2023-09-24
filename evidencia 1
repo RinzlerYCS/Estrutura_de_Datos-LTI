@@ -1,11 +1,12 @@
 import datetime as dt
 import re
+import openpyxl
 
 bandera_principal = True
 notas_borradas = [3]
 fecha_actual = dt.date.today()
 numero_folio = 0
-
+rfcconsulta={}
 notas_taller = {}
 detalles_precio = []
 detalles_service = []
@@ -20,7 +21,7 @@ while bandera_principal:
     print("\n|*****|")
     print("BIENVENIDO A TALLER PITONICO \n")
     try:
-        decision_menu = int(input("QUE OPCION DESEA ELEGIR \n \n1-Registrar una nota \n2-Consultas y reportes \n3-Cancelar nota \n4-Recuperar nota \n5-Salir del sistema \n"))
+        decision_menu = int(input("QUE OPCION DESEA ELEGIR\n1-Registrar una nota \n2-Consultas y reportes \n3-Cancelar nota \n4-Recuperar nota \n5-Salir del sistema \n"))
     except ValueError:
         print("Por favor, ingrese un número válido.")
         continue
@@ -43,10 +44,10 @@ while bandera_principal:
                     continue
                 fecha_procesada = dt.datetime.strptime(fecha_registro_nota, "%d/%m/%Y").date()
             except ValueError:
-                print("El dato ingresado no cumple con el patron (dd/mm/yy)")
+                print("El dato ingresado no cumple con el formato (dd/mm/yy)")
                 continue
-            if fecha_procesada<fecha_actual:            #SE VERIFICA QUE LA FECHA NO SEA ANTERIOR A LA ACTUAL
-                print("La fecha que usted ingreso es invalida, su fecha no debe ser anterior a la actual")  
+            if fecha_procesada>fecha_actual:            #SE VERIFICA QUE LA FECHA NO SEA posterior A LA ACTUAL
+                print("La fecha que usted ingreso es invalida, su fecha no debe ser posterior a la actual")  
                 continue
             else: 
                 break
@@ -58,7 +59,6 @@ while bandera_principal:
                 print("EL DATO NO DEBE DE OMITIRSE")
                 continue
             if re.match(patron_rfc, rfc_usuario):
-                print("RFC VALIDO")
                 break
             else:
                 print("RFC inválido, vuelva a ingresarlo")
@@ -71,7 +71,6 @@ while bandera_principal:
                 print("EL DATO NO DEBE DE OMITIRSE, VUELVA A INGRESARLO")
                 continue
             if re.match(patron_correo, correo):
-                print("CORREO VALIDO")
                 break
             else:
                 print("La dirección de correo electrónico no es válida.")
@@ -132,7 +131,7 @@ while bandera_principal:
         while True:
             while True:     #LAS CONSULTAS TIENE QUE SER POR MEDIO DE NUMEROS
                 try:
-                    submenu = int(input("Qué opción desea seleccionar:\n1-Consulta por periodo\n2-Consulta por folio\n3-Regresar al menu principal"))
+                    submenu = int(input("Qué opción desea seleccionar:\n1-Consulta por periodo\n2-Consulta por folio\n3-Consulta por RFC\n4-Regresar al menu principal"))
                     if submenu >=4 or submenu <=0:
                         print("EL DATO ESTA FUERA DE RANGO, ELIGA LA OPCION 1 O 2")
                         continue
@@ -192,12 +191,8 @@ while bandera_principal:
                         if consulta_folio in notas_taller.keys() and consulta_folio not in notas_borradas:
                             print("FOLIO EXISTENTE \n")
                             ppp=notas_taller.get(consulta_folio)  #NOS REGRESA UNA TUPLA
-                              
-                            print(f'|{"NOTA":^28}|')  
-                            print(f"|Folio: {consulta_folio:<19}|")
-                            print(f"|Fecha: {ppp[2] }|")####ARREGLAR OUTPUT DE FECHA PROBLEMA(:<19) (f-string)
-                            print(f"|Cliente: {ppp[0]}|")
-                            print(f"|Servicios: |")
+                            print(f'|{"NOTA":^28}|')
+                            print(f"Folio: {consulta_folio}\t Fecha: {fecha_procesada}\tCliente:{ppp[0]}\tRFC: {rfc_usuario}\tCorreo: {correo}")
                             for a in ppp[1]:
                                 print(f"|{a:<19}|")
                             
@@ -212,7 +207,71 @@ while bandera_principal:
                     break
             
             if submenu==3:
+                rfc_list = sorted(list(notas_taller.values()), key=lambda x: x[6])
+                for index, nota in enumerate(rfc_list, start=1):
+                    print(f"Nota {index}:")
+                    print(f"Folio RFC: {index}\tRFC: {nota[6]}")
+                rfc_consulta = input("Ingrese el RFC a consultar:\n")
+                notas_rfc = [nota for nota in notas_taller.values() if nota[6] == rfc_consulta]
+                if not notas_rfc:
+                    print(f"No se encontraron notas para el RFC {rfc_consulta}")
+                    break
+                else:
+                    # Calcula el monto promedio
+                    montos = [nota[2] for nota in notas_rfc]
+                    monto_promedio = sum(montos) / len(montos)
+
+                    # Mostrar información de notas
+                    for nota in notas_rfc:
+                        print("Detalles de la nota:")
+                        print(f"Folio: {nota[3]}\tFecha: {nota[0]}\tCliente: {nota[1]}\tRFC: {nota[6]}\tCorreo: {nota[5]}")
+                        for i, servicio in enumerate(nota[4]):
+                            print(f"Servicio {i + 1}: {servicio}\tPrecio: {nota[3][i]}")
+                        print(f"Total a pagar: {nota[2]}\n")
+
+                    # Preguntar si desea exportar a Excel
+                    exportar_excel = input("¿Desea exportar esta información a un archivo Excel? (SI/NO): ")
+                    if exportar_excel.upper() == "SI":
+                        # Crear un nuevo libro de Excel
+                        workbook = openpyxl.Workbook()
+                        sheet = workbook.active
+
+                        # Agregar encabezados
+                        sheet.append(["Folio", "Fecha", "Cliente", "RFC", "Correo", "Detalles", "Total"])
+
+                        # Agregar datos de las notas
+                        for nota in notas_rfc:
+                            servicios = ", ".join(service)
+                        # Asegúrate de que todos los valores sean de tipo cadena (str)
+                        fecha = str(fecha_procesada)  # Convierte la fecha a cadena
+                        cliente = str(nombre_registro)  # Convierte el cliente a cadena
+                        rfc = str(rfc_usuario)  # Convierte el RFC a cadena
+                        correo2 = str(correo)  # Convierte el correo a cadena
+                        total = str(tot)  # Convierte el total a cadena
+                        sheet.append([numero_folio, fecha, cliente, rfc, correo2, servicios, total])
+                      
+                        # Generar el nombre del archivo Excel
+                        fecha_hoy = dt.datetime.now().strftime("%Y%m%d%H%M%S")
+                        nombre_archivo = f"{rfc_consulta}_{fecha_hoy}.xlsx"
+
+                        # Guardar el libro de Excel
+                        workbook.save(nombre_archivo)
+
+                        print(f"Archivo Excel '{nombre_archivo}' generado exitosamente.")
+
                 break
+
+            elif submenu == 4:
+                break
+
+            else:
+                print("Opción no válida. Por favor, seleccione una opción válida.")
+
+
+
+
+
+
 
     elif decision_menu == 3:
         print("INGRESO A LA OPCION CANCELAR")
@@ -274,4 +333,4 @@ while bandera_principal:
     elif decision_menu == 5:
         break
     else:
-        print("Opción no válida. Por favor, seleccione una opción válida.")
+        print("Opción no válida. Por favor, seleccione una opción válida.") 
