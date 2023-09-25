@@ -1,0 +1,349 @@
+import datetime as dt
+import re
+import openpyxl
+import pandas as pd
+rfc=list()
+foli=list()
+rfc_folio=dict()
+promedio=list()
+servicios=list()
+rfc_iguales=dict()
+bandera_principal = True
+notas_borradas = [3]
+fecha_actual = dt.date.today()
+numero_folio = 0
+rfcconsulta={}
+notas_taller = {1: ("Vinicius", ["Aire a llantas", "Ajuste de frenos"], dt.date(2023, 8, 29), 400.20, "casas@gmail.com", "XEXT990101NI4"),
+                2: ("Cerati", ["Cambio de aceite", "Mantenimiento general", "Cambio de batería"], dt.date(2023, 8, 27), 3000.75,"albert_eins@gmail.com","AEXT990101NI4"),
+                3:("Vinicius",["Camibo de llantas", "Cambio de vujias"],dt.date(2022,9,12),500,"casas@gmail.com", "XEXT990101NI4")}
+detalles_precio = []
+detalles_service = []
+def validar_fecha(fecha):
+    try:
+        dt.datetime.strptime(fecha, "%d/%m/%Y")
+        return True
+    except ValueError:
+        return False
+
+while bandera_principal:
+    print("\n|*|")
+    print("BIENVENIDO A TALLER PITONICO \n")
+    try:
+        decision_menu = int(input("QUE OPCION DESEA ELEGIR\n1-Registrar una nota \n2-Consultas y reportes \n3-Cancelar nota \n4-Recuperar nota \n5-Salir del sistema \n"))
+    except ValueError:
+        print("Por favor, ingrese un número válido.")
+        continue
+
+    if decision_menu ==1:   #DATOS A PEDIR \NOMBRE \FECHA \RFC  \ CORREO ELEC  \SERVICIO(S), SE CALCULA EL TOTAL A PAGAR
+        print(f"ELIGIO LA OPCION DE REGISTRO DE NOTA\n")     
+        while True:
+            nombre_registro=input("Ingrese su nombre: ")       ##Y CAMBIAR LA BUSQUEDA POR ENTEROS
+            if nombre_registro.strip()=="":
+                print("EL DEBE NO DEBE ESTAR EN BLANCO")
+                continue
+            else:
+                break
+        numero_folio+=1
+        while True:
+            try:
+                fecha_registro_nota=input("Ingrese su fecha con el formato (dd/mm/aaaa): ")#SE PIDE LA FECHA DEL USUARIO
+                if fecha_registro_nota.strip()=="":
+                    print("EL DATO NO DEBE DE OMITIRSE")
+                    continue
+                fecha_procesada = dt.datetime.strptime(fecha_registro_nota, "%d/%m/%Y").date()
+            except ValueError:
+                print("El dato ingresado no cumple con el formato (dd/mm/yy)")
+                continue
+            if fecha_procesada>fecha_actual:            #SE VERIFICA QUE LA FECHA NO SEA posterior A LA ACTUAL
+                print("La fecha que usted ingreso es invalida, su fecha no debe ser posterior a la actual")  
+                continue
+            else: 
+                break
+            
+        while True:####SE VALIDA QUE EL RFC DADO POR EL USUARUI SEA CORRECTO
+            patron_rfc = (r'^[A-Z&Ñ]{3,4}\d{6}[A-V1-9][A-Z1-9]\d{1}$')
+            rfc_usuario = input("Introduce tu RFC: ")
+            if rfc_usuario.strip()=="":
+                print("EL DATO NO DEBE DE OMITIRSE")
+                continue
+            if re.match(patron_rfc, rfc_usuario):
+                break
+            else:
+                print("RFC inválido, vuelva a ingresarlo")
+                continue
+            
+        while True:##############SE VALIDA EL CORREO ELECTRONICO CON EL DEBIDO PATRON
+            patron_correo = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            correo = input("Ingrese una dirección de correo electrónico: ")
+            if correo.strip()=="":
+                print("EL DATO NO DEBE DE OMITIRSE, VUELVA A INGRESARLO")
+                continue
+            if re.match(patron_correo, correo):
+                break
+            else:
+                print("La dirección de correo electrónico no es válida.")
+                continue
+             
+        while True:   #SE PREGUNTARAM LOS SERVICIOS A ELEGIR
+            nombre_de_servicio_realizado=input("Ingresa los detalles de la nota: ")       #NO DEBE OMITIRSE
+            if nombre_de_servicio_realizado.strip()=="":            #VALIDACION PARA QUE NO SE OMITA
+                print("El campo no debe de estar vacio, favor de ingresar de nuevo")
+                continue
+            while True:    
+                try:    
+                    precio_detalle_service=float(input("Ingrese el precio del servicio: "))        
+                    if precio_detalle_service <=0:
+                        print("El precio debe de ser mayor que cero, ingrese de nuevo el valor")
+                        continue
+                    else: 
+                        break
+                except ValueError:
+                    print("EL DATO QUE DEBE DE SER NUMERICO")
+                    continue
+            detalles_service.append(nombre_de_servicio_realizado)  #INGRESAN DETALLES TIPO STR
+            detalles_precio.append(precio_detalle_service)#INGRESAN EL COSTO X SERVICIO FLOAT
+            while True:
+                servicio_extra=input("¿Desesa agregar otro servicio? SI/NO: ") 
+                if servicio_extra.strip()=="":
+                    print("EL DATO NO DEBE DE OMITIRSE")
+                    continue
+                elif servicio_extra.upper()=="NO":
+                    break
+                elif servicio_extra.upper()=="SI":
+                    break
+                else:
+                    print("DEBE CUMPLIR CON EL PATRON SI/NO")
+                    continue
+            if servicio_extra.upper()=="SI":
+                continue
+            else:       #SI LLEGO HASTA AQUI ES POR QUE PROPOCIONO TODOS LOS DATOS NECESARIOS
+                print()
+                tot=0
+                print(f'|{"NOTA":^28}|')            ###TODA ESTA ESTRUCTURA NO ES NECESARIA
+                print(f'{"="*30}')                  ###PERO SIRVE COMO VISUALIZADOR DE LA NOTA
+                print(f"Folio: {numero_folio}\t Fecha: {fecha_procesada}\tCliente: {nombre_registro}\tRFC: {rfc_usuario} \tCorreo: {correo}")    
+                for service,precio in zip(detalles_service,detalles_precio):  
+                        print(f'|Servicio: {service:<18} {precio}|')
+                for b in detalles_precio:      #LOS VALORES DE LOS SERVICIOS DE SUMAN PARA DAR EL TOTAL
+                    tot+=b
+                print(f'|Total: {tot:<18}|')
+                notas_taller[numero_folio]=(nombre_registro,[i for i in detalles_service],fecha_procesada,tot,correo,rfc_usuario)
+                #AQUI SE AGREGAN LOS ELEMENTOS AL DICCIONARIO
+                
+                print("\nLA NOTA SE HA REGISTRADO EXITOSAMENTE")
+                detalles_precio.clear()
+                detalles_service.clear()
+                break
+
+    elif decision_menu == 2:#################CAMBIO 23/09/2023   1:21 AM######################################
+        while True:
+            while True:     #LAS CONSULTAS TIENE QUE SER POR MEDIO DE NUMEROS
+                try:
+                    submenu = int(input("Qué opción desea seleccionar:\n1-Consulta por periodo\n2-Consulta por folio\n3-Consulta por RFC\n4-Regresar al menu principal"))
+                    if submenu >=4 or submenu <=0:
+                        print("EL DATO ESTA FUERA DE RANGO, ELIGA LA OPCION 1 O 2")
+                        continue
+                    else:           ##ESTE APARTADO SE ENCARGA DE LAS CONDICIONES: QUE ESTE EN EL RANGO Y QUE SEA NUMERICO 
+                        break          ##PARA LOS SUBMENUS####
+                except ValueError:
+                    print("INGRESE UN VALOR NUMERICO")
+                    continue####################################################################################
+
+            if submenu== 1:
+                
+                while True:
+                    try:
+                        fecha_inicio = input("Ingrese la fecha inicial del período, en formato dd/mm/aaaa:\n")
+                        if fecha_inicio.strip() == "":
+                            print("Se tomara la fecha predeterminada como 01/01/2000")
+                            fecha_inicio ="1/1/2000"
+                        fecha_inicio = dt.datetime.strptime(fecha_inicio, "%d/%m/%Y").date()
+                    except ValueError:
+                        print("El dato ingresado no cumple con el patrón (dd/mm/aaaa)")
+                        continue
+
+                    try:
+                        fecha_final = input("Ingrese la fecha final del período, en formato dd/mm/aaaa:\n")
+                        if fecha_final.strip() == "":
+                            print("No se ingreso nada, por lo tanto la fecha predetermianda es la fecha actual")
+                            fecha_final =dt.date.today()
+                        else:
+                            fecha_final = dt.datetime.strptime(fecha_final, "%d/%m/%Y").date()
+                    except ValueError:
+                        print("El dato ingresado no cumple con el patrón (dd/mm/aaaa)")
+                        continue
+                    
+                    break
+                
+                while True:
+
+                    notas_periodo = {folio: nota for folio, nota in notas_taller.items() if
+                                    fecha_inicio <= nota[2] <= fecha_final and folio not in notas_borradas}
+                    
+
+                    if notas_periodo:
+                        promedio= []
+                        print("\n \n ")
+                        print(f"Notas correspondientes al período: {fecha_inicio} -- {fecha_final}")
+                        for folio, nota in notas_periodo.items():
+                            print(f'|{"NOTA":^28}|') 
+                            print(f"|Folio: {folio}")
+                            print(f"|Fecha: {nota[2]}")
+                            print(f"|Cliente: {nota[0]}")
+                            print(f"|RFC: {nota[5]}")
+                            print(f"|Correo: {nota[4]}")
+                            print(f"|Total: ${nota[3]}")
+                            print("-" * 30)
+                            totalnota=nota[3]
+                            promedio.append (totalnota)
+                            promedio_periodo=sum (promedio)/len(promedio)
+                            
+                            #montos = [nota[2] for nota in notas_rfc]
+                            #monto_promedio = sum(montos) / len(montos)
+                            print (f"|Promedio de las notas vistas : ${promedio_periodo}")
+                            
+                        
+                    else:
+                        print("No hay notas emitidas para dicho período.")
+                    break
+
+            if submenu == 2: #CAMBIAMOS LAS CADENAS POR NUMEROS
+                while True:
+                    try:
+                        consulta_folio = int(input("Ingrese el folio a consultar:\n"))
+                        if consulta_folio in notas_taller.keys() and consulta_folio not in notas_borradas:
+                            print("FOLIO EXISTENTE \n")
+                            ppp=notas_taller.get(consulta_folio)  #NOS REGRESA UNA TUPLA
+                            print(f'|{"NOTA":^20}\t')  
+                            print(f"|Folio: {consulta_folio:<5} Fecha: {ppp[2]}\t Cliente: {ppp[0]} \t RFC: {ppp[5]} \t Correo: {ppp[4]}|")                             
+                            print(f"|Servicios: ")####ARREGLAR OUTPUT DE FECHA PROBLEMA(:<19) (f-string)
+                            for a in ppp[1]:
+                                print(f"|{a:<19}")
+                            print("|")
+                            print(f"|Total: {ppp[3]:<10}")
+                            
+                        else:
+                            print("FOLIO NO EXISTENTE O NO SE ENCUENTRA EN EL SISTEMA")
+                            #####CUANDO INGRESAMOS UN FOLIO FUERA DE RANGO O BORRANDO NOS REGRESA AL SUB MENU (CONSULTAS(FOLIO,PERIODO Y REGRESO))
+                    except ValueError:
+                        print("Por favor, ingrese un número válido para el folio.")
+                        continue
+                    break
+            
+            if submenu==3: ### CONSULTA POR CLIENTE
+                try: 
+                    for a,b in notas_taller.items():
+                        if b[5] in rfc:
+                            print(f"HAY MAS DE UNA NOTA CON EL RFC {b[5]} ")
+                        else:
+                            rfc.append(b[5])
+                            foli.append(a)
+                            
+                    for x,y in zip(rfc,foli):
+                        print(f"RFC: {x} Folio: {y}")
+                    rfc.clear()
+                    foli.clear()
+                    data = []
+                    for nota_id, (nombre, servicios, fecha, total, correo, rfc) in notas_taller.items():
+                        data.append([nota_id, nombre, servicios, fecha, total, correo, rfc])
+
+                    df = pd.DataFrame(data, columns=["Folio", "Nombre", "Servicios", "Fecha", "Total", "Correo", "RFC"])
+                    
+                    df = df.sort_values(by=["RFC"]).reset_index(drop=True)
+                    df.insert(0, "Folio consecutivo", df.index + 1)
+
+                    rfc_a_consultar = input("Ingrese el RFC a consultar: ")
+
+                    notas_cliente = df[df["RFC"] == rfc_a_consultar]
+
+                    if not notas_cliente.empty:
+                        # Calcular el monto promedio de las notas del cliente
+                        monto_promedio = notas_cliente["Total"].mean()
+
+                        # Mostrar la información de las notas del cliente
+                        print("Información de las notas del cliente:")
+                        print(notas_cliente)
+                    exportar = input("¿Desea exportar esta información a un archivo de Excel? (S/N): ")
+                    if exportar.upper() == "S":
+                            df = pd.DataFrame(notas_cliente, columns=["Nombre", "Servicios", "Fecha", "Total", "Correo", "RFC"])
+                            fecha_emision = dt.date.today()
+                            excel_filename = f"{rfc_a_consultar}_{fecha_emision}.xlsx"
+                            df.to_excel(excel_filename, index=False)
+                            print(f"La información ha sido exportada a {excel_filename}")
+                except ValueError :
+                    print("Eliga lo opcion dentro del rango")
+                    continue
+                                        
+            elif submenu == 4:
+                break
+
+            else:
+                print("Opción no válida. Por favor, seleccione una opción válida.")
+
+
+
+
+
+
+
+    elif decision_menu == 3:
+        print("INGRESO A LA OPCION CANCELAR")
+        while True:
+            try:
+                nota_a_cancelar = int(input("Ingrese el folio: "))
+                if nota_a_cancelar in notas_borradas:
+                    print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA O ESTÁ ELIMINADA")
+                elif nota_a_cancelar in notas_taller.keys():
+                    print("LA LLAVE QUE INGRESÓ ESTÁ EN EL DICCIONARIO")
+                    print(f"Folio: {numero_folio}\t Fecha: {fecha_procesada}\tCliente: {nombre_registro}\tRFC: {rfc_usuario}\tCorreo: {correo}\tDetalle: {service}\tTotal a pagar: {tot}")
+                    while True:
+                        confirmacion = input("CONFIRME SI DESEA ELIMINAR LA NOTA (SI/NO): ")
+                        if confirmacion.strip()=="":
+                            print("EL DATO NO DEBE DE OMITIRSE, INGRESELO DE NUEVO")
+                            continue
+                        else:
+                            break
+                    if confirmacion.upper() == "SI":
+                        notas_borradas.append(nota_a_cancelar)
+                        print("LA NOTA SE HA BORRADO EXITOSAMENTE")
+                    elif confirmacion.upper() == "NO":
+                        print("LA NOTA NO SE HA CANCELADO")
+                else:
+                    print("LA NOTA QUE BUSCA NO SE ENCUENTRA EN EL SISTEMA")
+            except ValueError:
+                print("Por favor, ingrese un número válido para el folio.")
+                continue
+            else:
+                break
+
+    elif decision_menu == 4:
+        print("OPCIÓN RECUPERAR NOTA")
+        while True:
+            print("LAS SIGUIENTES NOTAS ESTÁN CANCELADAS")
+            for folio, nota in notas_taller.items():
+                if folio in notas_borradas:
+                    print(f"Folio {folio}\t Cliente: {nota[1]}\t Fecha: {nota[0]}")
+            decision_recuperar_nota = input("¿DESEA RECUPERAR ALGUNA NOTA DE LAS PRESENTADAS? (SI/NO): ")
+            if decision_recuperar_nota.upper() == "NO":
+                break
+            try:
+                recuperar_nota = int(input("FOLIO A RECUPERAR: "))
+                if recuperar_nota in notas_borradas:
+                    for folio, nota in notas_taller.items():
+                        if folio == recuperar_nota:
+                            print(f"Folio: {numero_folio}\t Fecha: {fecha_procesada}\tCliente: {nombre_registro}\tRFC: {rfc_usuario}\tCorreo: {correo}\tDetalle: {nota[3]}\tTotal a pagar: {nota[2]}")
+                    decision_recuperar = input("CONFIRME SI DESEA RECUPERAR LA NOTA (SI/NO): ")
+                    if decision_recuperar.upper() == "SI":
+                        notas_borradas.remove(recuperar_nota)  
+                        print("LA NOTA SE HA RECUPERADO EXITOSAMENTE")
+                        break
+                else:
+                    print("EL FOLIO QUE INGRESÓ NO ESTÁ EN NOTAS ELIMINADAS")
+            except ValueError:
+                print("Por favor, ingrese un número válido para el folio.")
+                continue
+
+    elif decision_menu == 5:
+        break
+    else:
+        print("Opción no válida. Por favor, seleccione una opción válida.")
