@@ -2,6 +2,11 @@ import datetime as dt
 import re
 import openpyxl
 import pandas as pd
+
+libro = openpyxl.Workbook()
+hoja = libro["Sheet"]
+hoja.title = "Primera"
+
 rfc=list()
 foli=list()
 rfc_folio=dict()
@@ -9,13 +14,34 @@ promedio=list()
 servicios=list()
 rfc_iguales=dict()
 bandera_principal = True
-notas_borradas = [3]
+notas_borradas = []
 fecha_actual = dt.date.today()
 numero_folio = 0
 rfcconsulta={}
-notas_taller = {1: ("Vinicius", ["Aire a llantas", "Ajuste de frenos"], dt.date(2023, 8, 29), 400.20, "casas@gmail.com", "XEXT990101NI4"),
-                2: ("Cerati", ["Cambio de aceite", "Mantenimiento general", "Cambio de batería"], dt.date(2023, 8, 27), 3000.75,"albert_eins@gmail.com","AEXT990101NI4"),
-                3:("Vinicius",["Camibo de llantas", "Cambio de vujias"],dt.date(2022,9,12),500,"casas@gmail.com", "XEXT990101NI4")}
+
+##PARTES DEL DF###############3
+namesy_df=list()
+servicios_df=list()
+fechas_df=list()
+total_df=list()
+correo_df=list()
+rfc_df=list()
+folio_df=list()
+
+estrcu={
+    "Nombre":namesy_df,
+        "Servicios":servicios_df,
+        "Fecha":fechas_df,
+        "Total":total_df,
+        "Correo":correo_df,
+        "RFC":rfc_df
+}
+#TODO ESTO ES PARA LA CREACION DE DF
+##############3333
+dat_f=pd.DataFrame(estrcu,index=folio_df)
+
+notas_taller = {}
+
 detalles_precio = []
 detalles_service = []
 def validar_fecha(fecha):
@@ -130,18 +156,31 @@ while bandera_principal:
                 notas_taller[numero_folio]=(nombre_registro,[i for i in detalles_service],fecha_procesada,tot,correo,rfc_usuario)
                 #AQUI SE AGREGAN LOS ELEMENTOS AL DICCIONARIO
                 
+                ###AQUI SE AGREGAN LOS VALORES A LO QUE DESPUES CONFORARA EL DF
+                folio_df.append(numero_folio)
+                namesy_df.append(nombre_registro)
+                servicios_df.append([i for i in detalles_service])
+                fechas_df.append(fecha_procesada)
+                total_df.append(tot)
+                correo_df.append(correo)
+                rfc_df.append(rfc_usuario)
+                dat_f=pd.DataFrame(estrcu,index=folio_df)
+                
                 print("\nLA NOTA SE HA REGISTRADO EXITOSAMENTE")
                 detalles_precio.clear()
                 detalles_service.clear()
+                
+                
+                
                 break
 
     elif decision_menu == 2:#################CAMBIO 23/09/2023   1:21 AM######################################
         while True:
             while True:     #LAS CONSULTAS TIENE QUE SER POR MEDIO DE NUMEROS
                 try:
-                    submenu = int(input("Qué opción desea seleccionar:\n1-Consulta por periodo\n2-Consulta por folio\n3-Consulta por RFC\n4-Regresar al menu principal"))
-                    if submenu >=4 or submenu <=0:
-                        print("EL DATO ESTA FUERA DE RANGO, ELIGA LA OPCION 1 O 2")
+                    submenu = int(input("Qué opción desea seleccionar:\n1-Consulta por periodo\n2-Consulta por folio\n3-Consulta por Cliente\n4-Regresar al menu principal"))
+                    if submenu >=5 or submenu <=0:
+                        print("EL DATO ESTA FUERA DE RANGO, ELIGA LA OPCION ENTRE 1 Y 4")
                         continue
                     else:           ##ESTE APARTADO SE ENCARGA DE LAS CONDICIONES: QUE ESTE EN EL RANGO Y QUE SEA NUMERICO 
                         break          ##PARA LOS SUBMENUS####
@@ -231,50 +270,48 @@ while bandera_principal:
                     break
             
             if submenu==3: ### CONSULTA POR CLIENTE
-                try: 
-                    for a,b in notas_taller.items():
-                        if b[5] in rfc:
-                            print(f"HAY MAS DE UNA NOTA CON EL RFC {b[5]} ")
-                        else:
-                            rfc.append(b[5])
-                            foli.append(a)
+                print(dat_f["RFC"] )
+                while True:
+                    try: 
+                        eleccion_defolio=int(input("Que Folio desea elegir de los mostrados anteriormente"))
+                        if eleccion_defolio not in folio_df:
+                            print("Eliga una opcion dentro de los folios mostrados ")
+                            continue
+                        
+                        
+                        print(dat_f.loc[eleccion_defolio])
+                        nota_a_csv=dat_f.loc[eleccion_defolio]
+                    except ValueError :
+                        print("Eliga una opcion numerica")
+                        continue
+                    except IndexError:
+                        print("Folio esta como fuera de rango")
+                        continue
+                    while True:
+                        exportar_a_Excel=input("¿Desea exportar dicha información a un archivo de Excel, SI o NO?")
+                        
+                        if exportar_a_Excel.strip()=="":
+                            print("El dato no debe de omitirse")
+                        if exportar_a_Excel.upper()=="SI":
+                            print("CONVERTIR A EXCEL")
+                            nombre_de_Excel=dat_f.loc[eleccion_defolio].loc["RFC"]
                             
-                    for x,y in zip(rfc,foli):
-                        print(f"RFC: {x} Folio: {y}")
-                    rfc.clear()
-                    foli.clear()
-                    data = []
-                    for nota_id, (nombre, servicios, fecha, total, correo, rfc) in notas_taller.items():
-                        data.append([nota_id, nombre, servicios, fecha, total, correo, rfc])
+                            fecha_emision_Excel=dat_f.loc[eleccion_defolio].loc["Fecha"]
+                            
+                            x = f"{nombre_de_Excel}_{fecha_emision_Excel}"
 
-                    df = pd.DataFrame(data, columns=["Folio", "Nombre", "Servicios", "Fecha", "Total", "Correo", "RFC"])
-                    
-                    df = df.sort_values(by=["RFC"]).reset_index(drop=True)
-                    df.insert(0, "Folio consecutivo", df.index + 1)
+                            
+                            writer = pd.ExcelWriter(rf'{x}.xlsx')
+                            # Escribir el DataFrame en una hoja llamada 'Datos'
+                            nota_a_csv.to_excel(writer, sheet_name='Datos')
 
-                    rfc_a_consultar = input("Ingrese el RFC a consultar: ")
-
-                    notas_cliente = df[df["RFC"] == rfc_a_consultar]
-
-                    if not notas_cliente.empty:
-                        # Calcular el monto promedio de las notas del cliente
-                        monto_promedio = notas_cliente["Total"].mean()
-
-                        # Mostrar la información de las notas del cliente
-                        print("Información de las notas del cliente:")
-                        print(notas_cliente)
-                    exportar = input("¿Desea exportar esta información a un archivo de Excel? (S/N): ")
-                    if exportar.upper() == "S":
-                            df = pd.DataFrame(notas_cliente, columns=["Nombre", "Servicios", "Fecha", "Total", "Correo", "RFC"])
-                            fecha_emision = dt.date.today()
-                            excel_filename = f"{rfc_a_consultar}_{fecha_emision}.xlsx"
-                            df.to_excel(excel_filename, index=False)
-                            print(f"La información ha sido exportada a {excel_filename}")
-                        
-                        
-                except ValueError :
-                    print("Eliga lo opcion dentro del rango")
-                    continue
+                            # Guardar los cambios y cerrar el archivo
+                            writer.save()
+                            break
+                        else: 
+                            print("No se agregara a EXCEL")
+                            break
+                    break
                         
             elif submenu == 4:
               
@@ -347,16 +384,26 @@ while bandera_principal:
                 continue
 
     elif decision_menu == 5:
-        exccc=input("DESEA GUARDARLO A EXCEL SI/NO?").upper()
-        if exccc=="SI":
-                
-            df = pd.DataFrame(notas_taller)
-            nombre_archivo = "datos.xlsx"
+        while True:
+            try:
+                exccc=int(input("¿DESEA PRESERVAR TODA LA INFORMACION \n1-SI \n2-NO?"))
+                if exccc>=3 or exccc<=0:
+                    print("El dato debe estar en el rango 1 o 2")
+                    continue
+                if exccc==1:
+                    
+                    df = pd.DataFrame(estrcu)
+                    nombre_archivo_para_csv = "datos.csv"
 
-                    # Guardar el DataFrame en un archivo de Excel
-            df.to_excel(nombre_archivo, index=False) 
-        else:
-                break
-        break
+                            # GUARDAR EL DF EN CSVVVVVVV
+                    
+                    
+                    dat_f.to_csv(nombre_archivo_para_csv, header = True , index = True)
+                
+                bandera_principal=False
+            except ValueError:
+                print("El dato no es numerico")
+                continue
+            break
     else:
         print("Opción no válida. Por favor, seleccione una opción válida.")
