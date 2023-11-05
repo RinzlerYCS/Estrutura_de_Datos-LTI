@@ -1,0 +1,215 @@
+import sys
+import sqlite3
+from sqlite3 import Error
+import datetime
+import re
+import csv
+
+try:
+    with sqlite3.connect('TallerMecanico.db') as conn:
+        mi_cursor = conn.cursor()
+        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Cliente (clave INTEGER PRIMARY KEY, nombre TEXT NOT NULL, rfc TEXT NOT NULL, correo TEXT NOT NULL, activo TEXT NOT NULL);")
+        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Servicios (clave_servicio INTEGER PRIMARY KEY, nombre_servicio TEXT NOT NULL, precio NUMBER NOT NULL);")
+        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Notas (folio INTEGER PRIMARY KEY, fecha timestamp, activo TEXT NOT NULL, clave INTEGER NOT NULL, clave_servicio INTEGER NOT NULL, folio_detalles INTEGER NOT NULL, FOREIGN KEY (clave) REFERENCES Cliente (clave), FOREIGN KEY (clave_servicio) REFERENCES Servicios (clave_servicio), FOREIGN KEY (folio_detalles) REFERENCES Detalles (folio_detalles));")
+        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Detalles (folio_detalles INTEGER PRIMARY KEY, clave_servicio INTEGER, FOREIGN KEY (clave_servicio) REFERENCES Servicios (clave_servicio));")
+        print('Tablas creadas exitosamente')
+except Error as e:
+    print(e)
+except Exception:
+    print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
+finally:
+    conn.close()
+
+def generar_reporte_clientes_activos(ordenado_por_clave=True):
+    if ordenado_por_clave:
+        orden = "clave"
+        nombre_archivo = "ReporteClientesActivosPorClave"
+    else:
+        orden = "nombre"
+        nombre_archivo = "ReporteClientesActivosPorNombre"
+
+    fecha_actual = datetime.datetime.now()
+    fecha_reporte = fecha_actual.strftime("%m_%d_%Y")
+    nombre_archivo += "_" + fecha_reporte + ".csv"
+
+    try:
+        with sqlite3.connect("TallerMecanico.db") as conn:
+            mi_cursor = conn.cursor()
+            if ordenado_por_clave:
+                mi_cursor.execute("SELECT * FROM Cliente WHERE activo='S' ORDER BY clave")
+            else:
+                mi_cursor.execute("SELECT * FROM Cliente WHERE activo='S' ORDER BY nombre")
+            clientes_activos = mi_cursor.fetchall()
+
+            if clientes_activos:
+                print("Lista de clientes activos:")
+                for fila in clientes_activos:
+                    print(f"Clave: {fila[0]}, Nombre: {fila[1]}, RFC: {fila[2]}, Correo: {fila[3]}")
+
+                opcion_exportar = input("¿Desea exportar este reporte a CSV o Excel? (CSV/Excel/No): ")
+                if opcion_exportar.lower() in ["csv", "excel"]:
+                    exportar_reporte(nombre_archivo, clientes_activos, opcion_exportar)
+            else:
+                print("No se encuentran clientes activos")
+    except Error as e:
+        print(e)
+    except Exception:
+        print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
+    finally:
+        conn.close()
+
+def exportar_reporte(nombre_archivo, datos, formato):
+    if formato.lower() == "csv":
+        with open(nombre_archivo, 'w', newline='') as archivo_csv:
+            escritor = csv.writer(archivo_csv)
+            escritor.writerow(["Clave", "Nombre", "RFC", "Correo"])
+            escritor.writerows(datos)
+        print(f"Reporte exportado a {nombre_archivo} en formato CSV")
+    elif formato.lower() == "excel":
+        # Agregar aquí el código para exportar a Excel si es necesario
+        print("Exportar a Excel aún no está implementado.")
+    else:
+        print("Formato no válido. No se exportará el reporte.")
+
+while True:
+    print('1. Notas\n2. Clientes\n3. Servicios\n4. Salir')
+    opcion = int(input('Selecciona una opción: '))
+    
+    match opcion:
+        case 1: #notas
+            while True:
+                print('1. Registrar una nota\n2. Cancelar una nota\n3. Recuperar una nota\n4. Consultas y reportes\n5. Volver al menú principal')
+                opcion2 = int(input('Selecciona una opción en el submenú: '))
+                
+                match opcion2:
+                    case 1:
+                        print("Opción 1 del submenú")
+                    case 2:
+                        print("Opción 2 del submenú")
+                    case 3:
+                        print("Opción 3 del submenú")
+                    case 4:
+                        while True:
+                            print('1. Consulta por periodo\n2. Consulta por folio\n3. Volver al menú principal')
+                            opcion3 = int(input('Selecciona una opción en el submenú: ')
+                            )
+                            match opcion3:
+                                case 1:
+                                    print("Opción 1 del submenú")
+                                case 2:
+                                    print("Opción 2 del submenú")
+                                case 3:
+                                    break
+                                case _:
+                                    print("Opción no válida")
+                    case 5:
+                        break
+                    case _:
+                        print("Opción no válida")
+        case 2: #clientes
+            while True:
+                print('1. Agregar un cliente\n2. Consultas y reportes\n3. Volver al menú principal')
+                opcion4 = int(input('Selecciona una opción en el submenú: '))
+                
+                match opcion4:
+                    case 1:
+                        while True:
+                            nombre_cliente = input("Ingrese su nombre: ")
+                            if nombre_cliente.strip() == "":
+                                print("El nombre no debe estar en blanco")
+                            else:
+                                break
+                        while True:
+                            patron_rfc = r'^[A-Z&Ñ]{3,4}\d{6}[A-V1-9][A-Z1-9]\d{1}$'
+                            rfc_usuario = input("Introduce tu RFC: ")
+                            if rfc_usuario.strip() == "":
+                                print("El RFC no debe estar en blanco")
+                                continue
+                            if re.match(patron_rfc, rfc_usuario):
+                                break
+                            else:
+                                print("RFC inválido, vuelva a ingresarlo")
+                        while True:
+                            patron_correo = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                            correo = input("Ingrese una dirección de correo electrónico: ")
+                            if correo.strip() == "":
+                                print("El correo no debe estar en blanco")
+                            if re.match(patron_correo, correo):
+                                break
+                            else:
+                                print("La dirección de correo electrónico no es válida.")
+                        try:
+                            with sqlite3.connect("TallerMecanico.db") as conn:
+                                mi_cursor = conn.cursor()
+                                valores = (nombre_cliente, rfc_usuario, correo, 'S')  # No se incluye dato para la PK
+                                mi_cursor.execute("INSERT INTO Cliente (nombre, rfc, correo, activo) VALUES(?,?,?,?)", valores)
+                        except Error as e:
+                            print(e)
+                        except Exception:
+                            print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
+                        finally:
+                            conn.close()
+                    case 2:
+                        while True:
+                            print('1. Listados de clientes registrados\n2. Busqueda por clave\n3. Busqueda por nombre\n4. Volver al menú principal')
+                            opcion5 = int(input('Selecciona una opción en el submenú: '))
+                            match opcion5:
+                                case 1:
+                                    while True:
+                                        print('1. Ordenar por clave\n2. Ordenar por nombre\n3. Volver al menú principal')
+                                        opcion6 = int(input('Selecciona una opción en el submenú: '))
+                                        match opcion6:
+                                            case 1:
+                                                generar_reporte_clientes_activos(ordenado_por_clave=True)
+                                                break
+                                            case 2:
+                                                generar_reporte_clientes_activos(ordenado_por_clave=False)
+                                                break
+                                            case 3:
+                                                break
+                                            case _:
+                                                print("Opción no válida")
+                                case 2:
+                                    clave_busqueda = int(input("Ingrese la clave del cliente a buscar: "))
+                                    try:
+                                        with sqlite3.connect("TallerMecanico.db") as conn:
+                                            mi_cursor = conn.cursor()
+                                            mi_cursor.execute("SELECT * FROM Cliente WHERE clave=?", (clave_busqueda,))
+                                            clavecliente = mi_cursor.fetchone()
+                                            if clavecliente:
+                                                print("Cliente encontrado")
+                                                print(f"Clave: {clavecliente[0]}, Nombre: {clavecliente[1]}, RFC: {clavecliente[2]}, Correo: {clavecliente[3]}")
+                                            else:
+                                                print("No se encuentran clientes")
+                                    except Error as e:
+                                        print(e)
+                                    except Exception:
+                                        print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
+                                    finally:
+                                        conn.close()
+                                case 3:
+                                    nombre_busqueda = input("Ingrese el nombre del cliente a buscar: ")
+                                    try:
+                                        with sqlite3.connect("TallerMecanico.db") as conn:
+                                            mi_cursor = conn.cursor()
+                                            mi_cursor.execute("SELECT * FROM Cliente WHERE nombre=?", (nombre_busqueda,))
+                                            nombrecliente = mi_cursor.fetchone()
+                                            if nombrecliente:
+                                                print("Cliente encontrado")
+                                                print(f"Clave: {nombrecliente[0]}, Nombre: {nombrecliente[1]}, RFC: {nombrecliente[2]}, Correo: {nombrecliente[3]}")
+                                            else:
+                                                print("No se encuentran clientes")
+                                    except Error as e:
+                                        print(e)
+                                    except Exception:
+                                        print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
+                                    finally:
+                                        conn.close()
+                                case 4:
+                                    break
+                                case _:
+                                    print("Opción no válida")
+                    case 3:
+                        break
+                    case _:
+                        print("Opción no válida")
