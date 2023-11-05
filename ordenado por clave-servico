@@ -1,0 +1,117 @@
+import sys
+import sqlite3
+from sqlite3 import Error
+import datetime
+import re
+import csv
+
+try:
+    with sqlite3.connect ('TallerMecanico.db') as conn:
+        mi_cursor = conn.cursor()
+        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Cliente (clave INTEGER PRIMARY KEY, nombre TEXT NOT NULL, rfc TEXT NOT NULL, correo TEXT NOT NULL);")
+        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Servicios (clave_servicio INTEGER PRIMARY KEY, nombre_servicio TEXT NOT NULL, precio INTEGER NOT NULL);")
+        # Otros comandos de creación y datos iniciales...
+        print('Tablas creadas exitosamente')
+except Error as e:
+    print (e)
+except Exception:
+    print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
+finally:
+    conn.close()
+
+while True:
+  try:
+    print('1. Notas\n2. Clientes\n3. Servicios\n4. Salir')
+    opcion = int(input('Selecciona una opción: '))
+    match opcion:
+        case 1: #notas
+            # Opciones del menú de notas...
+        case 2: #clientes
+            # Opciones del menú de clientes...
+        case 3: #Servicios
+            while True:
+                print('1. Agregar un servicio\n2. Consultas y reportes\n3. Volver al menú principal')
+                opcion7 = int(input('Selecciona una opción en el submenú: '))
+                match opcion7:
+                    case 1:
+                        # Agregar un servicio...
+                    case 2:
+                        while True:
+                            print('1. Busqueda por clave del servicio\n2. Busqueda por nombre del servicio\n3. Listado de servicios\n4. Volver al menú principal')
+                            opcion8 = int(input('Selecciona una opción en el submenú: '))
+                            match opcion8:
+                                case 1:
+                                    try:
+                                        with sqlite3.connect("TallerMecanico.db") as conn:
+                                            mi_cursor = conn.cursor()
+                                            mi_cursor.execute("SELECT * FROM Servicios ORDER BY clave_servicio")
+                                            servicios_ordenados = mi_cursor.fetchall()
+
+                                            if servicios_ordenados:
+                                                print("Reporte de Servicios ordenado por clave:")
+                                                print(f"{'Clave':<10}{'Nombre del Servicio':<30}{'Precio':<10}")
+                                                for servicio in servicios_ordenados:
+                                                    print(f"{servicio[0]:<10}{servicio[1]:<30}${servicio[2]:<10}")
+
+                                                exportar = input("¿Deseas exportar el reporte a CSV? (Sí/No): ").strip().lower()
+                                                if exportar == "si":
+                                                    fecha_reporte = datetime.datetime.now().strftime("%m_%d_%Y")
+                                                    nombre_archivo = f"ReporteServiciosPorClave_{fecha_reporte}.csv"
+                                                    with open(nombre_archivo, mode='w', newline='') as archivo_csv:
+                                                        writer = csv.writer(archivo_csv)
+                                                        writer.writerow(["Clave", "Nombre del Servicio", "Precio"])
+                                                        for servicio in servicios_ordenados:
+                                                            writer.writerow([servicio[0], servicio[1], servicio[2])
+                                                    print(f"El reporte se ha exportado como '{nombre_archivo}'")
+
+                                            else:
+                                                print("No se encuentran servicios registrados.")
+                                    except Error as e:
+                                        print(e)
+                                    finally:
+                                        conn.close()
+                                    break
+
+                                case 2:
+                                    try:
+                                        with sqlite3.connect("TallerMecanico.db") as conn:
+                                            mi_cursor = conn.cursor()
+                                            mi_cursor.execute("SELECT * FROM Servicios ORDER BY nombre_servicio")
+                                            servicios_ordenados = mi_cursor.fetchall()
+
+                                            if servicios_ordenados:
+                                                print("Reporte de Servicios ordenado por nombre:")
+                                                print(f"{'Nombre del Servicio':<30}{'Clave':<10}{'Precio':<10}")
+                                                for servicio in servicios_ordenados:
+                                                    print(f"{servicio[1]:<30}{servicio[0]:<10}${servicio[2]:<10}")
+
+                                                exportar = input("¿Deseas exportar el reporte a CSV? (Sí/No): ").strip().lower()
+                                                if exportar == "si":
+                                                    fecha_reporte = datetime.datetime.now().strftime("%m_%d_%Y")
+                                                    nombre_archivo = f"ReporteServiciosPorNombre_{fecha_reporte}.csv"
+                                                    with open(nombre_archivo, mode='w', newline='') as archivo_csv:
+                                                        writer = csv.writer(archivo_csv)
+                                                        writer.writerow(["Nombre del Servicio", "Clave", "Precio"])
+                                                        for servicio in servicios_ordenados:
+                                                            writer.writerow([servicio[1], servicio[0], servicio[2])
+                                                    print(f"El reporte se ha exportado como '{nombre_archivo}'")
+
+                                            else:
+                                                print("No se encuentran servicios registrados.")
+                                    except Error as e:
+                                        print(e)
+                                    finally:
+                                        conn.close()
+                                    break
+                                case 3:
+                                    # Otras opciones del menú de servicios...
+                    case 3:
+                        break
+                    case _:
+                        print("Opción no válida")
+        case 4:
+            break
+        case _:
+            print("Opción no válida")
+  except ValueError:
+    print("La clave tiene que ser un numero")
