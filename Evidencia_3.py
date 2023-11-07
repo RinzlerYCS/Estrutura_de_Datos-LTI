@@ -39,7 +39,7 @@ while True:
                 match opcion2:
                     case 1:
                         try:
-                          with sqlite3.connect("ultimate_test7890.db") as conn:
+                          with sqlite3.connect("TallerMecanico.db") as conn:
                             my_cursor=conn.cursor()
                             my_cursor.execute("SELECT clave,nombre FROM Cliente;")
                             querie=my_cursor.fetchall()
@@ -55,7 +55,7 @@ while True:
                           conn.close()
                         
                         try:
-                          with sqlite3.connect("ultimate_test7890.db") as conn:
+                          with sqlite3.connect('TallerMecanico.db') as conn:
                             while True:
                               my_cursor=conn.cursor()
                               clave_de_cliente=int(input("Eliga una de las claves mostradas: "))
@@ -93,7 +93,7 @@ while True:
                                 break
 
                         try:
-                          with sqlite3.connect("ultimate_test7890.db") as conn:
+                          with sqlite3.connect('TallerMecanico.db') as conn:
                             my_cursor=conn.cursor()
 
                             a={"fecha":fecha_procesada,
@@ -106,7 +106,7 @@ while True:
                             conn.close()
 
                         try:
-                            with sqlite3.connect("ultimate_test7890.db") as conn:
+                            with sqlite3.connect('TallerMecanico.db') as conn:
                               my_cursor=conn.cursor()
                               my_cursor.execute("SELECT clave_servicio, nombre_servicio, precio FROM Servicios;")
                               querie=my_cursor.fetchall()
@@ -125,7 +125,7 @@ while True:
 
                         while True:
                           try:
-                            with sqlite3.connect("ultimate_test7890.db") as conn:
+                            with sqlite3.connect('TallerMecanico.db') as conn:
                               my_cursor=conn.cursor()
                               clave_servicio=int(input("Ingrese alguna de las claves mostradas previamente: "))##FALTA VALIDAR LA LLAVE DEL SERVICIO
                               validacion_servicio_diccionario={"clave_servicio":clave_servicio}
@@ -144,7 +144,7 @@ while True:
 
 
                           try:
-                            with sqlite3.connect("ultimate_test7890.db") as conn:
+                            with sqlite3.connect('TallerMecanico.db') as conn:
                               my_cursor=conn.cursor()
                               my_cursor.execute("SELECT folio FROM Notas ORDER BY folio DESC LIMIT 1")
                               conexx_N_D=my_cursor.fetchone()
@@ -177,7 +177,7 @@ while True:
                         while True:
 
                           try:
-                            with sqlite3.connect("ultimate_test7890.db") as conn:
+                            with sqlite3.connect('TallerMecanico.db') as conn:
                               my_cursor=conn.cursor()
                               folio_n_cancelar=int(input("Ingrese su folio de la nota a cancelar: "))
                               
@@ -205,7 +205,7 @@ while True:
                             conn.close()
 
                           try:
-                            with sqlite3.connect("ultimate_test7890.db") as conn:
+                            with sqlite3.connect('TallerMecanico.db') as conn:
                               my_cursor=conn.cursor()
                               
                               mostrar_nota_c_detalles={"folio":folio_cancelar_global}
@@ -271,7 +271,7 @@ while True:
                             folio_cancelados=[]
                             print("Notas Canceladas")
                             try:
-                              with sqlite3.connect("ultimate_test7890.db") as conn:
+                              with sqlite3.connect('TallerMecanico.db') as conn:
                                 my_cursor=conn.cursor()
 
                                 my_cursor.execute("SELECT T.folio, T.nombre, T.rfc, T.correo, T.fecha, T.[Monto a pagar]\
@@ -313,7 +313,7 @@ while True:
                                 print('el dato debe de ser numerico')
                                 continue
                             try:
-                              with sqlite3.connect("ultimate_test7890.db") as conn:
+                              with sqlite3.connect('TallerMecanico.db') as conn:
                                 my_cursor=conn.cursor()
                                 #SE MUESTRAN LOS DETALLES DE LA NOTA
                                 consulta_f={"folio":folio_n_cancelar}
@@ -339,7 +339,7 @@ while True:
                                 break
                               elif confirmar_recuperar==1:
                                 try:
-                                  with sqlite3.connect("ultimate_test7890.db") as conn:
+                                  with sqlite3.connect('TallerMecanico.db') as conn:
                                     my_cursor=conn.cursor()
                                     print("se recuperara la noTa")
                                     recuperar_n={"folio":folio_n_cancelar}
@@ -395,7 +395,7 @@ while True:
                                       #usar diccionario
 
                                       try:
-                                        with sqlite3.connect("ultimate_test7890.db") as conn:
+                                        with sqlite3.connect('TallerMecanico.db') as conn:
                                           my_cursor=conn.cursor()
                                           diccion_fecha={"fecha_inicial":fecha_inicio,
                                                           "fecha_final":fecha_final
@@ -432,7 +432,7 @@ while True:
                                     print("Opción 2 Consulta por folio")
 
                                     try:
-                                      with sqlite3.connect("ultimate_test7890.db") as conn:
+                                      with sqlite3.connect('TallerMecanico.db') as conn:
                                         my_cursor=conn.cursor()
                                         my_cursor.execute("SELECT N.folio, N.fecha, C.nombre FROM Notas N INNER \
                                         JOIN Cliente C ON N.clave=C.clave WHERE activo='1'ORDER BY folio;")
@@ -451,7 +451,7 @@ while True:
                                     while True:
 
                                       try: 
-                                        with sqlite3.connect("ultimate_test7890.db") as conn:
+                                        with sqlite3.connect('TallerMecanico.db') as conn:
                                           my_cursor=conn.cursor()
                                           folio_a_consultar=int(input("Ingrese su folio a consultar: "))
                                           nominal_a_consultar={"folio":folio_a_consultar}
@@ -468,7 +468,7 @@ while True:
                                         conn.close()
 
                                       try:
-                                        with sqlite3.connect("ultimate_test7890.db") as conn:
+                                        with sqlite3.connect('TallerMecanico.db') as conn:
                                           my_cursor=conn.cursor()
 
                                           en_sentencia7={"folio":folio_a_consultar}
