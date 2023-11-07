@@ -5,6 +5,7 @@ from datetime import datetime
 import re
 import csv
 import openpyxl
+import pandas as pd
 from openpyxl import Workbook
 
 fecha_actual = datetime.today().strftime("%Y-%m-%d")
