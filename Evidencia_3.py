@@ -1,14 +1,14 @@
 import sys
 import sqlite3
 from sqlite3 import Error
-from datetime import datetime 
+import datetime as dt
 import re
 import csv
 import openpyxl
 import pandas as pd
 from openpyxl import Workbook
 
-fecha_actual = datetime.today().strftime("%Y-%m-%d")
+fecha_actual = dt.date.today()
 try:
     with sqlite3.connect ('TallerMecanico.db') as conn:
         mi_cursor=conn.cursor()
@@ -73,6 +73,9 @@ while True:
 
                         except Error as e:
                           print(e)
+                        except ValueError:
+                          print("El dato debe de ser numerico")
+                          continue
                         finally:
                           conn.close()
                         
@@ -228,38 +231,32 @@ while True:
                           finally:
                             conn.close()
 
-                            while True:
-                                try:
-                                  confirmacion_cancelar=int(input("Desea cancelar la nota?\n1-Si 2-No: "))
-                                  with sqlite3.connect("ultimate_test7890.db") as conn:
-                                    my_cursor=conn.cursor()
-                                    if confirmacion_cancelar ==1:
-                                        print("SE VA A CANCELAR LA NOTA")
-                                        cancelar_nota_dicc={"folio":folio_cancelar_global}
-                                        my_cursor.execute("UPDATE Notas SET activo=0 WHERE folio=(:folio);",cancelar_nota_dicc)
-                                        break
-                                    elif confirmacion_cancelar==2:
-                                      print("No se cancelara la nota")
-                                      break
-                                    elif confirmacion_cancelar>2 or confirmacion_cancelar<1:
-                                      print("Debe ingresar la opcion 1 o 2")
-                                      continue
-                                except Error as e:
-                                  print(e)
-                                except ValueError:
-                                  print("El dato debe de ser numerico")
-                                finally:
-                                  conn.close()
-                                  continue
-                            break
+                          while True:
+                              try:
+                                confirmacion_cancelar=int(input("Desea cancelar la nota?\n1-Si 2-No: "))
+                                with sqlite3.connect("TallerMecanico.db") as conn:
+                                  my_cursor=conn.cursor()
+                                  if confirmacion_cancelar ==1:
+                                    print("SE VA A CANCELAR LA NOTA")
+                                    cancelar_nota_dicc={"folio":folio_cancelar_global}
+                                    my_cursor.execute("UPDATE Notas SET activo=0 WHERE folio=(:folio);",cancelar_nota_dicc)
+                                    break
+                                  elif confirmacion_cancelar==2:
+                                    print("No se cancelara la nota")
+                                    break
+                                  elif confirmacion_cancelar>2 or confirmacion_cancelar<1:
+                                    print("Debe ingresar la opcion 1 o 2")
+                                    continue
+                              except Error as e:
+                                print(e)
+                              except ValueError:
+                                print("El dato debe de ser numerico")
+                              finally:
+                                conn.close()
+                                
+                          break
                         break
                          
-
-                            
-
-                        
-
-
 
 
                     case 3:
@@ -400,19 +397,32 @@ while True:
                                           diccion_fecha={"fecha_inicial":fecha_inicio,
                                                           "fecha_final":fecha_final
                                                           }
-                                          my_cursor.execute("SELECT	N.folio, N.fecha, C.nombre, C.rfc, C.correo \
+                                          my_cursor.execute("SELECT	N.folio, N.fecha, C.nombre, C.rfc, C.correo, SUM(S.precio) as 'Monto a pagar' \
                                             FROM Notas N INNER JOIN Cliente C ON N.clave=C.clave INNER \
                                             JOIN Detalles D ON D.folio = N.folio INNER JOIN Servicios S ON D.clave_servicio=S.clave_servicio \
-                                            WHERE N.fecha BETWEEN :fecha_inicial AND :fecha_final AND N.activo=1;",diccion_fecha)
+                                            WHERE N.fecha BETWEEN :fecha_inicial AND :fecha_final AND N.activo=1\
+                                            GROUP BY N.folio, N.fecha, C.nombre, C.rfc, C.correo;",diccion_fecha)
                                           notas_fechas=my_cursor.fetchall()
-                                          print("folio\tfecha\tnombre\trfc\tcorreo\tmonto a pagar")
-                                          for a,b,c,d,e in notas_fechas:##SE MUESTRAN LAS NOTAS SIN SU DETALLE
-                                            print(f"{a}\t{b}\t {c}\t {d}\t {e}")
+                                          if notas_fechas:
+                                            pass
+                                          else:
+                                            print("No hay notas emitidas para dicho periodo")
+                                            break
 
-                                          df = pd.DataFrame(notas_fechas, columns=["folio", "fecha", "nombre", "rfc", "correo"])
 
 
-                                          pasar_a_csv_excel=int(input("Desea pasar esta informacion a \n1-.csv  2-Excel:  "))
+
+                                          print("folio\tfecha\t\tnombre\t\trfc\t\tcorreo\t\tmonto a pagar")
+                                          print("-" * 100)
+                                      
+                                          for a,b,c,d,e,f in notas_fechas:##SE MUESTRAN LAS NOTAS SIN SU DETALLE
+                                            print(f"{a}|\t{b}|\t{c}|  {d}|\t{e}|\t{f}|")
+
+                                          df = pd.DataFrame(notas_fechas, columns=["folio", "fecha", "nombre", "rfc", "correo", "monto a pagar"])
+
+
+
+                                          pasar_a_csv_excel=int(input("Desea pasar esta informacion a \n1-.csv  2-Excel  3-Volver al menú:  "))
                                           if pasar_a_csv_excel==1:
                                             print("Se pasara a .csv")
                                             df.to_csv(f"Reporte_por_periodo_{fecha_inicio}_{fecha_final}", index=False)
@@ -420,6 +430,8 @@ while True:
                                           elif pasar_a_csv_excel==2:
                                             print("Se pasara a Excel")
                                             df.to_excel(f"Reporte_por_periodo_{fecha_inicio}_{fecha_final}.xlsx", index=False)
+                                            break
+                                          elif pasar_a_csv_excel==3:
                                             break
 
                                             
@@ -481,7 +493,7 @@ while True:
                                           if mostrar_c:
                                             for folio, fecha, nombre,nombre, rfc, correo,monto in mostrar_c:
                                               print(folio, fecha, nombre,nombre, rfc, correo,monto)
-                                              break
+                                            break
                                           else:
                                             print("Folio cancelado o no existente")
                                             continue
@@ -499,6 +511,8 @@ while True:
                                     break
                                 case _:
                                     print("Opción no válida")
+                    case 5:
+                      break
         case 2: #clientes
             while True:
                 print('')
