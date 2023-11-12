@@ -24,7 +24,11 @@ finally:
     conn.close()
 while True:
     print('\nMENU PRINCIPAL\n1. Notas\n2. Clientes\n3. Servicios\n4. Salir')
-    opcion = int(input('Selecciona una opción: '))
+    try:
+        opcion = int(input('Selecciona una opción: '))
+    except ValueError:
+        print("Por favor, ingrese un número válido.")
+        continue     
     match opcion:
         case 1: 
             while True:
@@ -475,43 +479,61 @@ while True:
                                     print("\nLista de clientes activos")
                                     for fila in clientesactivos:
                                         print(f"Clave: {fila[0]} \t Nombre: {fila[1]}")
+                                else:
+                                    print("No hay clientes activos")
+                                    break
                         except Error as e:
                              print (e)
                         except:
                              print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
                         finally:
                             conn.close()
-                        cliente_cancelar = int(input("Ingrese la clave del cliente que quiera cancelar, seleccione 0 si elige no calcelar ninguno"))
-                        if cliente_cancelar>=1:  
+                        while True:
                             try:
-                                with sqlite3.connect("TallerMecanico.db") as conn:
-                                    mi_cursor = conn.cursor()                                
-                                    mi_cursor.execute("SELECT * FROM Cliente WHERE clave=?", (cliente_cancelar,))
-                                    clientesacancelar= mi_cursor.fetchone()
-                                    if clientesacancelar:
-                                        print("\nInformacion del cliente")
-                                        print(f"Clave: {clientesacancelar[0]}\t Nombre: {clientesacancelar[1]}\t RFC: {clientesacancelar[2]}\tCorreo: {clientesacancelar[3]}")
-                            except Error as e:
-                                 print (e)
-                            except:
-                                 print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
-                            finally:
-                                conn.close()
-                        else:
-                            break
-                        try:
-                            des_cliente_cancelar = int(input("\nSi quiere cancelar este cliente precione 1, para volver al menu anterior precione 2"))
-                            if des_cliente_cancelar==1:    
-                                with sqlite3.connect("TallerMecanico.db") as conn:
-                                        mi_cursor = conn.cursor()
-                                        mi_cursor.execute("UPDATE Cliente SET activo=0 WHERE clave=?", (cliente_cancelar,))
-                                        print("Se cancelo el cliente")
+                                 cliente_cancelar = int(input("Ingrese la clave del cliente que quiera cancelar, seleccione 0 si elige no calcelar ninguno"))
+                            except ValueError:
+                                print("Por favor, ingrese un número válido.")
+                                continue
+                            if cliente_cancelar>=1:  
+                                try:
+                                    with sqlite3.connect("TallerMecanico.db") as conn:
+                                        mi_cursor = conn.cursor()                                
+                                        mi_cursor.execute("SELECT * FROM Cliente WHERE clave=?", (cliente_cancelar,))
+                                        clientesacancelar= mi_cursor.fetchone()
+                                        if clientesacancelar:
+                                            print("\nInformacion del cliente")
+                                            print(f"Clave: {clientesacancelar[0]}\t Nombre: {clientesacancelar[1]}\t RFC: {clientesacancelar[2]}\tCorreo: {clientesacancelar[3]}")
+                                            break
+                                except Error as e:
+                                     print (e)
+                                except:
+                                     print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
+                                finally:
+                                    conn.close()
                             else:
+                                print("Ingresa un numero")
+                            if cliente_cancelar==0:
                                 break
-                        except sqlite3.Error as e:
-                            print(f"Error de SQLite: {e}")
-                        finally:
-                             conn.close()   
+                        while True:
+                            try:
+                                try:
+                                    des_cliente_cancelar = int(input("\nSi quiere cancelar este cliente precione 1, para volver al menu anterior precione 2 "))
+                                except ValueError:
+                                    print("Por favor, ingrese un número válido.")
+                                    continue
+                                if des_cliente_cancelar==1:    
+                                    with sqlite3.connect("TallerMecanico.db") as conn:
+                                            mi_cursor = conn.cursor()
+                                            mi_cursor.execute("UPDATE Cliente SET activo=0 WHERE clave=?", (cliente_cancelar,))
+                                            print("Se cancelo el cliente")
+                                            break
+                            except sqlite3.Error as e:
+                                print(f"Error de SQLite: {e}")
+                            finally:
+                                 conn.close()
+                            if des_cliente_cancelar==2:
+                                break
+                            
                     case 3:
                         print("\n Recuperar cliente")
                         try:
@@ -529,37 +551,49 @@ while True:
                              print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
                         finally:
                             conn.close()
-                        cliente_recuperar = int(input("Ingrese la clave del cliente que quiera recuperar, seleccione 0 si elige no recuperar ninguno"))
-                        if cliente_recuperar>=1:  
+                        while True:
                             try:
-                                with sqlite3.connect("TallerMecanico.db") as conn:
-                                    mi_cursor = conn.cursor()                                
-                                    mi_cursor.execute("SELECT * FROM Cliente WHERE clave=?", (cliente_recuperar,))
-                                    clientesarecuperar= mi_cursor.fetchone()
-                                    if clientesarecuperar:
-                                        print("\nInformacion del cliente")
-                                        print(f"Clave: {clientesarecuperar[0]}\t Nombre: {clientesarecuperar[1]}\tRFC: {clientesarecuperar[2]}\tCorreo: {clientesarecuperar[3]}")
-                            except Error as e:
-                                 print (e)
-                            except:
-                                 print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
-                            finally:
-                                conn.close()
-                        else:
-                            break
-                        try:
-                            des_cliente_recuperar = int(input("\nSi quiere recuperar este cliente precione 1, para volver al menu anterior precione 2"))
-                            if des_cliente_recuperar==1:    
-                                with sqlite3.connect("TallerMecanico.db") as conn:
-                                        mi_cursor = conn.cursor()
-                                        mi_cursor.execute("UPDATE Cliente SET activo=1 WHERE clave=?", (cliente_recuperar,))
-                                        print("Se recuperado el cliente")
-                            else:
+                                cliente_recuperar = int(input("Ingrese la clave del cliente que quiera recuperar, seleccione 0 si elige no recuperar ninguno"))
+                            except ValueError:
+                                print("Por favor, ingrese un número válido.")
+                                continue
+                            if cliente_recuperar==0:
                                 break
-                        except sqlite3.Error as e:
-                            print(f"Error de SQLite: {e}")
-                        finally:
-                             conn.close()   
+                            if cliente_recuperar>0:
+                                if cliente_recuperar in clientesactivos:
+                                    try:
+                                        with sqlite3.connect("TallerMecanico.db") as conn:
+                                            mi_cursor = conn.cursor()                                
+                                            mi_cursor.execute("SELECT * FROM Cliente WHERE clave=?", (cliente_recuperar,))
+                                            clientesarecuperar= mi_cursor.fetchone()
+                                            if clientesarecuperar:
+                                                print("\nInformacion del cliente")
+                                                print(f"Clave: {clientesarecuperar[0]}\t Nombre: {clientesarecuperar[1]}\tRFC: {clientesarecuperar[2]}\tCorreo: {clientesarecuperar[3]}")
+                                    except Error as e:
+                                         print (e)
+                                    except:
+                                         print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
+                                    finally:
+                                        conn.close()
+                                        break
+                            try:
+                                try:
+                                    des_cliente_recuperar = int(input("\nSi quiere recuperar este cliente precione 1, para volver al menu anterior precione 2"))
+                                except ValueError:
+                                    print("Por favor, ingrese un número válido.")
+                                    continue
+                                if des_cliente_recuperar==1:    
+                                    with sqlite3.connect("TallerMecanico.db") as conn:
+                                            mi_cursor = conn.cursor()
+                                            mi_cursor.execute("UPDATE Cliente SET activo=1 WHERE clave=?", (cliente_recuperar,))
+                                            print("Se recuperado el cliente")
+                                            break
+                                else:
+                                    break
+                            except sqlite3.Error as e:
+                                print(f"Error de SQLite: {e}")
+                            finally:
+                                 conn.close()   
                         
                     case 4:
                         while True:
@@ -726,13 +760,13 @@ while True:
                                     except Exception:
                                          print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
                                     finally:
-                                        conn.close()
-                                                          
-                                case 5:
+                                        conn.close()                        
+                                case 4:
                                     break
                                 case _:
                                     print("Opción no válida")
-                    case 3:
+                                
+                    case 5:
                         break  
                     case _:
                         print("Opción no válida")
@@ -776,9 +810,8 @@ while True:
                             print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
                         finally:
                             conn.close()
-
                     case 2:
-                        print("\nSuspender un cliente")
+                        print("\nSuspender un servicio")
                         try:
                             with sqlite3.connect("TallerMecanico.db") as conn:
                                 mi_cursor = conn.cursor()
@@ -788,30 +821,38 @@ while True:
                                     print("\nLista de servicios activos")
                                     for fila in serviciosactivos:
                                         print(f"Clave: {fila[0]} \t Nombre: {fila[1]}")
+                                else:
+                                    print("\nNo hay servicios suspendisos")
+                                    break
                         except Error as e:
                              print (e)
                         except:
                              print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
                         finally:
                             conn.close()
-                        servicio_cancelar = int(input("Ingrese la clave del servicio que quiera cancelar, seleccione 0 si elige no calcelar ninguno"))
-                        if servicio_cancelar>=1:  
+                        while True:
                             try:
-                                with sqlite3.connect("TallerMecanico.db") as conn:
-                                    mi_cursor = conn.cursor()                                
-                                    mi_cursor.execute("SELECT * FROM Servicios WHERE clave_servicio=?", (servicio_cancelar,))
-                                    serviciosacancelar= mi_cursor.fetchone()
-                                    if serviciosacancelar:
-                                        print("\nInformacion del cliente")
-                                        print(f"Clave: {serviciosacancelar[0]}\t Nombre: {serviciosacancelar[1]}\t Precio: {serviciosacancelar[2]}")
-                            except Error as e:
-                                 print (e)
-                            except:
-                                 print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
-                            finally:
-                                conn.close()
-                        else:
-                            break
+                                servicio_cancelar = int(input("Ingrese la clave del servicio que quiera cancelar, seleccione 0 si elige no calcelar ninguno"))
+                            except ValueError:
+                                print("Por favor, ingrese un número válido.")
+                                continue
+                            if servicio_cancelar>=1:  
+                                try:
+                                    with sqlite3.connect("TallerMecanico.db") as conn:
+                                        mi_cursor = conn.cursor()                                
+                                        mi_cursor.execute("SELECT * FROM Servicios WHERE clave_servicio=?", (servicio_cancelar,))
+                                        serviciosacancelar= mi_cursor.fetchone()
+                                        if serviciosacancelar:
+                                            print("\nInformacion del cliente")
+                                            print(f"Clave: {serviciosacancelar[0]}\t Nombre: {serviciosacancelar[1]}\t Precio: {serviciosacancelar[2]}")
+                                except Error as e:
+                                     print (e)
+                                except:
+                                     print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
+                                finally:
+                                    conn.close()
+                            else:
+                                break
                         try:
                             des_servicio_cancelar = int(input("\nSi quiere cancelar este servicio precione 1, para volver al menu anterior precione 2"))
                             if des_servicio_cancelar==1:    
@@ -972,7 +1013,7 @@ while True:
                                                                 continue
                                                            match opcionarchivo:
                                                                 case 1:
-                                                                    nombre_archivocsv= f"ReporteServiciosPorClave_{fecha_actual}.csv"
+                                                                    nombre_archivocsv= f"ReporteServiciosPorClave_{formato_fecha}.csv"
                                                                     with open(nombre_archivocsv, mode='w', newline='') as archivo_csv:
                                                                         escritor_csv = csv.writer(archivo_csv)
                                                                         escritor_csv.writerow(['Clave', 'Nombre del Servicio', 'Precio'])
@@ -980,7 +1021,7 @@ while True:
                                                                             escritor_csv.writerow(fila)
                                                                         break 
                                                                 case 2:
-                                                                    nombre_archivo_xlsx = f"ReporteServiciosPorClave_{fecha_actual}.xlsx"
+                                                                    nombre_archivo_xlsx = f"ReporteServiciosPorClave_{formato_fecha}.xlsx"
                                                                     workbook = Workbook()
                                                                     sheet = workbook.active
                                                                     sheet.append(['Clave', 'Nombre del Servicio', 'Precio'])
@@ -1017,7 +1058,7 @@ while True:
                                                                 continue
                                                             match opcionarchivo:
                                                                 case 1:
-                                                                    nombre_archivocsv = f"ReporteServiciosPorNombre_{fecha_actual}.csv"
+                                                                    nombre_archivocsv = f"ReporteServiciosPorNombre_{formato_fecha}.csv"
                                                                     with open(nombre_archivocsv, mode='w', newline='') as archivo_csv:
                                                                         escritor_csv = csv.writer(archivo_csv)
                                                                         escritor_csv.writerow(['Clave', 'Nombre del Servicio', 'Precio'])
@@ -1025,7 +1066,7 @@ while True:
                                                                     print(f"Los datos se han guardado en el archivo CSV '{nombre_archivocsv}'.")
                                                                     break
                                                                 case 2:
-                                                                    nombre_archivo_xlsx = f"ReporteServiciosPorNombre_{fecha_actual}.xlsx"
+                                                                    nombre_archivo_xlsx = f"ReporteServiciosPorNombre_{formato_fecha}.xlsx"
                                                                     workbook = Workbook()
                                                                     sheet = workbook.active
                                                                     sheet.append(['Clave', 'Nombre del Servicio', 'Precio'])
@@ -1050,11 +1091,222 @@ while True:
                                     break
                                 case _:
                                     print("Opción no válida")
-                    case 3:
+                    case 5:
                         break
                     case _:
                         print("Opción no válida")
-        case 4:
+        case 4: 
+            while True:
+                print('\nESTADISTICAS\n1. Servicios más prestados\n2. Clientes con más notas\n3. Promdeio de los montos de las notas\n4. Volver al menú principal')
+                try:
+                    opciones = int(input('Selecciona una opción en el submenú: '))
+                except ValueError:
+                    print("Por favor, ingrese un número válido.")
+                    continue
+                match opciones:
+                    case 1:
+                        while True:   #CONSULTA POR PERIODO
+                            try:
+                                cantidad_d_servicios_a_mostrar=int(input("¿Cuantos servicios desea consultar?"))
+                                if cantidad_d_servicios_a_mostrar <1:
+                                  print('Tiene que elegir al menos un valor')
+                                  continue
+                            except ValueError:
+                                print("Tiene que ingresar un dato numerico")
+                                continue
+                            try:
+                                fecha_inicio = input("Ingrese la fecha inicial del período, en formato dd/mm/aaaa:\n")
+                                if fecha_inicio.strip() == "":
+                                  print("Se tomara la fecha predeterminada como 01/01/2000")
+                                  fecha_inicio ="1/1/2000"
+                                fecha_inicio = dt.datetime.strptime(fecha_inicio, "%d/%m/%Y").date()
+                                if fecha_inicio>fecha_actual:            #SE VERIFICA QUE LA FECHA NO SEA posterior A LA ACTUAL
+                                  print("La fecha que usted ingreso es invalida, su fecha no debe ser posterior a la actual")
+                                  continue
+                            except ValueError:
+                                print("El dato ingresado no cumple con el patrón (dd/mm/aaaa)")
+                                continue
+
+                            try:
+                                fecha_final = input("Ingrese la fecha final del período, en formato dd/mm/aaaa:\n")
+                                if fecha_final.strip() == "":###validar que sea posterior
+                                  print("No se ingreso nada, por lo tanto la fecha predetermianda es la fecha actual")
+                                  fecha_final =dt.date.today()
+                                else:
+                                  fecha_final = dt.datetime.strptime(fecha_final, "%d/%m/%Y").date()
+                            except ValueError:
+                                print("El dato ingresado no cumple con el patrón (dd/mm/aaaa)")
+                                continue
+
+                            try:
+                                with sqlite3.connect("TallerMecanico (3).db") as conn:
+                                  my_cursor=conn.cursor()
+                                  mayores_servicios={"fechainicio":fecha_inicio,
+                                                     "fechafinal":fecha_final,
+                                                     "cantidad_a_mostrar":cantidad_d_servicios_a_mostrar}
+                                  my_cursor.execute('SELECT S.nombre_servicio,COUNT(D.clave_servicio) as Cantidad\
+                                                      FROM Detalles D INNER JOIN Servicios S ON D.clave_servicio=S.clave_servicio\
+                                                      INNER JOIN Notas N ON N.folio=D.folio\
+                                                      WHERE  N.fecha BETWEEN :fechainicio AND :fechafinal\
+                                                      GROUP BY D.clave_servicio\
+                                                      ORDER BY D.clave_servicio ASC\
+                                                      LIMIT :cantidad_a_mostrar',mayores_servicios)
+                                  
+                                  muestra=my_cursor.fetchall()
+                                  print('Servicio\t Cantidad')
+                                  print("-"*30)
+                                  for a,b in muestra:
+                                      print(f'{a}\t{b}')
+                                  while True:
+                                    print('Donde deseas guardar el arvhivo\n 1. CSV \n2. Excel\n3. Salir')
+                                    try:
+                                        opcionarchivoes= int(input('Selecciona una opción en el submenú: '))
+                                    except ValueError:
+                                        print("Por favor, ingrese solo números .")
+                                        continue
+                                    match opcionarchivoes:
+                                        case 1:
+                                            nombre_archivocsv= f"ReporteServiciosMasPrestados_{fecha_inicio}_{fecha_final}.csv"
+                                            with open(nombre_archivocsv, mode='w', newline='') as archivo_csv:
+                                                escritor_csv = csv.writer(archivo_csv)
+                                                escritor_csv.writerow(['Servicio', 'Cantidad'])
+                                                for fila in muestra:
+                                                    escritor_csv.writerow(fila)
+                                                    break 
+                                        case 2:
+                                            nombre_archivo_xlsx = f"ReporteServiciosMasPrestados_{fecha_inicio}_{fecha_final}.xlsx"
+                                            workbook = Workbook()
+                                            sheet = workbook.active
+                                            sheet.append(['Nombre del Servicio', 'Cantidad'])
+                                            for fila in muestra:
+                                                sheet.append(fila)
+                                                workbook.save(nombre_archivo_xlsx)
+                                                print(f"Los datos se han guardado en el archivo Excel '{nombre_archivo_xlsx}'.")
+                                        case 3:
+                                            break
+                                        case _:
+                                            print("Opción no válida")   
+                            except Error as e:
+                                print(e)
+                            except ValueError:
+                                print("")
+                                break
+                    case 2:
+                        print("\nClientes con más notas")
+                        try:
+                            cantidad_clientes=int(input("Ingresa cuantos clientes quieres que se muestren (la cantidad minima es 1)"))
+                        except ValueError:
+                            print("Por favor, ingrese un número válido.")
+                            continue
+                        try:
+                            fecha_inicio = input("Ingrese la fecha inicial del período, en formato dd/mm/aaaa:\n")
+                            if fecha_inicio.strip() == "":
+                                print("Se tomara la fecha predeterminada como 01/01/2000")
+                                fecha_inicio ="1/1/2000"
+                            fecha_inicio = dt.datetime.strptime(fecha_inicio, "%d/%m/%Y").date()
+                            if fecha_inicio>fecha_actual:     
+                                print("La fecha que usted ingreso es invalida, su fecha no debe ser posterior a la actual")
+                                continue
+                        except ValueError:
+                                print("El dato ingresado no cumple con el patrón (dd/mm/aaaa)")
+                                continue
+                        try:
+                            fecha_final = input("Ingrese la fecha final del período, en formato dd/mm/aaaa:\n")
+                            if fecha_final.strip() == "":
+                                print("No se ingreso nada, por lo tanto la fecha predetermianda es la fecha actual")
+                                fecha_final =dt.date.today()
+                            else:
+                                fecha_final = dt.datetime.strptime(fecha_final, "%d/%m/%Y").date()
+                        except ValueError:
+                            print("El dato ingresado no cumple con el patrón (dd/mm/aaaa)")
+                            continue
+                        try:
+                            with sqlite3.connect("TallerMecanico.db") as conn:
+                                my_cursor=conn.cursor()
+                                mayores_clientes={"fechainicio":fecha_inicio, "fechafinal":fecha_final, "cantidad_a_mostrar":cantidad_clientes}
+                                my_cursor.execute('SELECT C.nombre ,COUNT(N.clave) as Cantidad FROM Cliente C INNER JOIN Notas N ON C.clave=N.clave\
+                                                      WHERE  N.fecha BETWEEN :fechainicio AND :fechafinal\
+                                                      GROUP BY N.clave\
+                                                      ORDER BY N.clave DESC\
+                                                      LIMIT :cantidad_a_mostrar',mayores_clientes)
+                                muestra=my_cursor.fetchall()
+                                print('Clientes\t Cantidad')
+                                for a,b in muestra:
+                                    print(f'{a}  \t{b}')
+                                while True:
+                                    print('Donde deseas guardar el arvhivo\n 1. CSV \n2. Excel\n3. Salir')
+                                    try:
+                                        opcionarchivoes= int(input('Selecciona una opción en el submenú: '))
+                                    except ValueError:
+                                        print("Por favor, ingrese solo números .")
+                                        continue
+                                    match opcionarchivoes:
+                                        case 1:
+                                            nombre_archivocsv= f"ReporteClientesConMasNotas_{fecha_inicio}_{fecha_final}.csv"
+                                            with open(nombre_archivocsv, mode='w', newline='') as archivo_csv:
+                                                escritor_csv = csv.writer(archivo_csv)
+                                                escritor_csv.writerow(['Cliente', 'Cantidad'])
+                                                for fila in muestra:
+                                                    escritor_csv.writerow(fila)
+                                                    break 
+                                        case 2:
+                                            nombre_archivo_xlsx = f"ReporteClientesConMasNotas_{fecha_inicio}_{fecha_final}.xlsx"
+                                            workbook = Workbook()
+                                            sheet = workbook.active
+                                            sheet.append(['Nombre del Servicio', 'Cantidad'])
+                                            for fila in muestra:
+                                                sheet.append(fila)
+                                                workbook.save(nombre_archivo_xlsx)
+                                                print(f"Los datos se han guardado en el archivo Excel '{nombre_archivo_xlsx}'.")
+                                        case 3:
+                                            break
+                                        case _:
+                                            print("Opción no válida")                                           
+                        except Error as e:
+                            print(e)
+                        except ValueError:
+                            print("")
+                            break
+                    case 3:
+                        print("\nPromedio de los montos de las notas")
+                        while True:
+                            try:
+                                fecha_inicio_estadistica2 = input("Ingrese la fecha inicial del período a reportar, en formato dd/mm/aaaa:\n")
+                                if fecha_inicio_estadistica2.strip() == "":
+                                  print("El dato no debe estar vacio")
+                                  continue
+                                fecha_inicio_estadistica2 = dt.datetime.strptime(fecha_inicio_estadistica2, "%d/%m/%Y").date()
+                                fecha_final_estadistica2 = input("Ingrese la fecha final del periodo a reportar, en formato dd/mm/aaaa: \n")
+                                if fecha_final_estadistica2.strip() == "":
+                                  print("El dato no debe estar vacio")
+                                  continue
+                                fecha_final_estadistica2 = dt.datetime.strptime(fecha_final_estadistica2, "%d/%m/%Y").date()
+                                if fecha_final_estadistica2 < fecha_inicio_estadistica2:
+                                    print("La fecha final debe ser mayor o igual a la fecha inicial.")    
+                                    continue 
+                                with sqlite3.connect("TallerMecanico (3).db") as conn:
+                                  my_cursor=conn.cursor()
+                                  prom_montos_nota={"fecha_inicial":fecha_inicio_estadistica2,
+                                                    "fecha_final":fecha_final_estadistica2}
+                                  my_cursor.execute(" SELECT AVG(S.precio) AS 'Promedio'\
+                                                      FROM Notas N INNER JOIN Detalles D ON N.folio=D.folio\
+                                                      INNER JOIN Servicios S ON S.clave_servicio=D.clave_servicio\
+                                                      WHERE N.fecha BETWEEN :fecha_inicial AND :fecha_final\
+                                                      ",prom_montos_nota)
+                                  promedio_mostrado=my_cursor.fetchall()
+                                  print("-"*20)
+                                  print(f"Promedio de los montos {fecha_inicio_estadistica2}/{fecha_final_estadistica2}")
+                                  print("-"*20)
+                                  for i in promedio_mostrado:
+                                    print(f"|   {i[0]}   |")
+                                  break
+                            except ValueError:
+                                print("El dato es incorrecto")
+                    case 4:
+                        break
+                    case _:
+                        print("Opción no válida")  
+        case 5:
             break
         case _:
             print("Opción no válida")
