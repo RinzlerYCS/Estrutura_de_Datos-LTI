@@ -23,7 +23,7 @@ except Exception:
 finally:
     conn.close()
 while True:
-    print('\nMENU PRINCIPAL\n1. Notas\n2. Clientes\n3. Servicios\n4. Salir')
+    print('\nMENU PRINCIPAL\n1. Notas\n2. Clientes\n3. Servicios\n4. Estadisticas\n5. Salir')
     try:
         opcion = int(input('Selecciona una opción: '))
     except ValueError:
@@ -44,14 +44,15 @@ while True:
                         try:
                             with sqlite3.connect("TallerMecanico.db") as conn:
                                 mi_cursor = conn.cursor()
-                                mi_cursor.execute("SELECT * FROM Cliente ORDER BY clave")
+                                mi_cursor.execute("SELECT clave, nombre FROM Cliente WHERE activo=1 ORDER BY clave")
                                 clientesactivos= mi_cursor.fetchall()
                                 if clientesactivos:
                                     print("Lista de clientes activos")
                                     for fila in clientesactivos:
                                         print(f"Clave: {fila[0]} \t Nombre: {fila[1]}")
                                 else:
-                                    print(f"No se encuentran clientes")  
+                                    print(f"No se encuentran clientes, ingresa uno en el apartado clientes")
+                                    break
                         except Error as e:
                             print (e)
                         except Exception:
@@ -62,7 +63,7 @@ while True:
                             with sqlite3.connect('TallerMecanico.db') as conn:
                                 while True:
                                     my_cursor=conn.cursor()
-                                    clave_de_cliente=int(input("Eliga una de las claves mostradas: "))
+                                    clave_de_cliente=int(input("Elige una de las claves mostradas: "))
                                     diccionario_cliente={"clave":clave_de_cliente}
                                     my_cursor.execute("SELECT * FROM Cliente  WHERE clave=:clave ",diccionario_cliente)
                                     querie=my_cursor.fetchall()
@@ -107,7 +108,7 @@ while True:
                         try:
                             with sqlite3.connect('TallerMecanico.db') as conn:
                               my_cursor=conn.cursor()
-                              my_cursor.execute("SELECT clave_servicio, nombre_servicio, precio FROM Servicios;")
+                              my_cursor.execute("SELECT clave_servicio, nombre_servicio, precio FROM Servicios WHERE activo=1;")
                               querie=my_cursor.fetchall()
                               print("Eliga alguno de los siguientes servicios")
                               print("Clave\t\tNombre\t\t\tPrecio")
@@ -822,7 +823,7 @@ while True:
                                     for fila in serviciosactivos:
                                         print(f"Clave: {fila[0]} \t Nombre: {fila[1]}")
                                 else:
-                                    print("\nNo hay servicios suspendisos")
+                                    print("\nNo hay servicios suspendidos")
                                     break
                         except Error as e:
                              print (e)
@@ -832,7 +833,7 @@ while True:
                             conn.close()
                         while True:
                             try:
-                                servicio_cancelar = int(input("Ingrese la clave del servicio que quiera cancelar, seleccione 0 si elige no calcelar ninguno"))
+                                servicio_cancelar = int(input("Ingrese la clave del servicio que quiera cancelar, seleccione 0 si elige no cancelar ninguno"))
                             except ValueError:
                                 print("Por favor, ingrese un número válido.")
                                 continue
@@ -843,8 +844,10 @@ while True:
                                         mi_cursor.execute("SELECT * FROM Servicios WHERE clave_servicio=?", (servicio_cancelar,))
                                         serviciosacancelar= mi_cursor.fetchone()
                                         if serviciosacancelar:
-                                            print("\nInformacion del cliente")
+                                            print("\nInformacion del servicio")
                                             print(f"Clave: {serviciosacancelar[0]}\t Nombre: {serviciosacancelar[1]}\t Precio: {serviciosacancelar[2]}")
+                                            break
+                                  
                                 except Error as e:
                                      print (e)
                                 except:
@@ -854,7 +857,7 @@ while True:
                             else:
                                 break
                         try:
-                            des_servicio_cancelar = int(input("\nSi quiere cancelar este servicio precione 1, para volver al menu anterior precione 2"))
+                            des_servicio_cancelar = int(input("\n Si deseas confirmar la cancelacion preciona 1 \n si deseas volver al menu 2"))
                             if des_servicio_cancelar==1:    
                                 with sqlite3.connect("TallerMecanico.db") as conn:
                                         mi_cursor = conn.cursor()
@@ -879,7 +882,6 @@ while True:
                                         print(f"Clave: {fila[0]} \t Nombre: {fila[1]}")
                                 else:
                                     print("\nNo hay servicios suspendidos")
-                                    break
                         except Error as e:
                              print (e)
                         except:
@@ -969,7 +971,7 @@ while True:
                                     while True:
                                         servicio_busqueda=input("Ingresa el servicio que deseas consultar : ").lower() #para las mayusculas y minusculas
                                         if servicio_busqueda.strip()=="":
-                                            print("El campo debe no puede quedar vacio")
+                                            print("El campo no puede quedar vacio")
                                         else:
                                            break
                                     try:
