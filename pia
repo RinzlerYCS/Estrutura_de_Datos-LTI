@@ -1,8 +1,25 @@
-#es esteeeeeeeeee
+
 import sys
 import sqlite3
 from sqlite3 import Error
-
+import datetime as dt
+import re
+import csv
+from openpyxl import Workbook 
+import pandas as pd
+fecha_actual = dt.date.today()
+formato_fecha = fecha_actual.strftime("%d_%m_%Y")
+try:
+    with sqlite3.connect ('TallerMecanico.db') as conn:
+        mi_cursor=conn.cursor()
+        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Cliente (clave INTEGER PRIMARY KEY, nombre TEXT NOT NULL, rfc TEXT NOT NULL, correo TEXT NOT NULL, activo INTEGER NOT NULL);")
+        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Servicios  (clave_servicio INTEGER PRIMARY KEY, nombre_servicio TEXT NOT NULL, precio INTEGER NOT NULL , activo INTEGER NOT NULL);")
+        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Notas (folio INTEGER PRIMARY KEY, fecha timestamp ,activo INTEGER NOT NULL, clave INTEGER NOT NULL, FOREIGN KEY (clave) REFERENCES Cliente (clave));")
+        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Detalles (folio_detalles INTEGER PRIMARY KEY, clave_servicio INTEGER ,  folio INTEGER ,FOREIGN KEY (clave_servicio) REFERENCES Servicios (clave_servicio),FOREIGN KEY (folio) REFERENCES Notas (folio));")
+except Error as e:
+    print (e)
+except Exception:
+    print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
 finally:
     conn.close()
 while True:
@@ -11,8 +28,15 @@ while True:
         opcion = int(input('Selecciona una opción: '))
     except ValueError:
         print("Por favor, ingrese un número válido.")
-        continue
-
+        continue     
+    match opcion:
+        case 1: 
+            while True:
+                print('\nNOTAS\n1. Registrar una nota\n2. Cancelar una nota\n3. Recuperar una nota\n4. Consultas y reportes\n5. Volver al menú principal')
+                try:
+                    opcion2 = int(input('Selecciona una opción en el submenú: '))
+                except ValueError:
+                    print("Por favor, ingrese un número válido.")
                     continue
                 match opcion2:
                     case 1:
@@ -38,10 +62,11 @@ while True:
                         try:
                             with sqlite3.connect('TallerMecanico.db') as conn:
                                 while True:
+                                  try:
                                     my_cursor=conn.cursor()
                                     clave_de_cliente=int(input("Elige una de las claves mostradas: "))
                                     diccionario_cliente={"clave":clave_de_cliente}
-                                    my_cursor.execute("SELECT * FROM Cliente  WHERE clave=:clave ",diccionario_cliente)
+                                    my_cursor.execute("SELECT * FROM Cliente  WHERE clave=:clave AND activo=1",diccionario_cliente)
                                     querie=my_cursor.fetchall()
                                     if querie:
                                         print(f"Si existe este cliente con clave: {clave_de_cliente}")
@@ -50,6 +75,11 @@ while True:
                                     else:
                                         print("Este cliente no existe o se encuentra cancelado")
                                         continue
+                                  except Error as e:
+                                    print(e)
+                                  except ValueError:
+                                    print("El valor debe de ser numerico")
+                                    continue
                         except Error as e:
                           print(e)
                         except ValueError:
@@ -67,7 +97,7 @@ while True:
                           except ValueError:
                                 print("El dato ingresado no cumple con el formato (dd/mm/aaa)")
                                 continue
-                          if fecha_procesada>=fecha_actual:
+                          if fecha_procesada>=fecha_actual:  
                                print("La fecha que usted ingreso es invalida, su fecha no debe ser posterior a la actual")
                                continue
                           else:
@@ -75,8 +105,8 @@ while True:
                         try:
                           with sqlite3.connect('TallerMecanico.db') as conn:
                             my_cursor=conn.cursor()
-                            a={"fecha":fecha_procesada,"activo":1,"clave":clave_c}
-                            my_cursor.execute("INSERT INTO Notas (fecha,activo,clave) VALUES (:fecha,:activo,:clave)",a)
+                            datos_de_nota_a_agregar={"fecha":fecha_procesada,"activo":1,"clave":clave_c}
+                            my_cursor.execute("INSERT INTO Notas (fecha,activo,clave) VALUES (:fecha,:activo,:clave)",datos_de_nota_a_agregar)
                         except Error as e:
                             print(e)
                         finally:
@@ -86,12 +116,17 @@ while True:
                               my_cursor=conn.cursor()
                               my_cursor.execute("SELECT clave_servicio, nombre_servicio, precio FROM Servicios WHERE activo=1;")
                               querie=my_cursor.fetchall()
-                              print("Eliga alguno de los siguientes servicios")
-                              print("Clave\t\tNombre\t\t\tPrecio")
-                              print("-" * 45)
-                              for clave,nombre,preciod in querie:
-                                print(f"{clave:^6}|\t{nombre}\t|\t{preciod}")
-                              print("-" * 45)
+                              if querie:
+                                print("Eliga alguno de los siguientes servicios")
+                                print("Clave\t\tNombre\t\t\tPrecio")
+                                print("-" * 45)
+                                for clave,nombre,preciod in querie:
+                                  print(f"{clave:^6}|\t{nombre}\t|\t{preciod}")
+                                print("-" * 45)
+                              else:
+                                print("No hay servicios registrados")
+                                break
+                              
                         except Error as e:
                           print(e)
                         finally:
@@ -102,15 +137,18 @@ while True:
                               my_cursor=conn.cursor()
                               clave_servicio=int(input("Ingrese alguna de las claves mostradas previamente: "))
                               validacion_servicio_diccionario={"clave_servicio":clave_servicio}
-                              my_cursor.execute("SELECT * FROM Servicios WHERE clave_servicio=:clave_servicio",validacion_servicio_diccionario)
+                              my_cursor.execute("SELECT * FROM Servicios WHERE clave_servicio=:clave_servicio AND activo=1",validacion_servicio_diccionario)
                               validacion_servicio=my_cursor.fetchall()
                               if validacion_servicio:
                                 print("Si existe este servicio")
                               else:
-                                print("Este servicio no existe")
+                                print("Este servicio no existe o se encuetra cancelado")
                                 continue
                           except Error as e:
                             print(e)
+                          except ValueError:
+                            print("El dato debe de ser nuemrico")
+                            continue
                           finally:
                             conn.close()
                           try:
@@ -146,16 +184,16 @@ while True:
                               my_cursor=conn.cursor()
                               folio_n_cancelar=int(input("Ingrese su folio de la nota a cancelar: "))
                               en_sentencia8={"folio":folio_n_cancelar}
-                              my_cursor.execute("SELECT * FROM Notas WHERE folio=:folio AND activo='1'",en_sentencia8)
+                              my_cursor.execute("SELECT * FROM Notas WHERE folio=:folio AND activo=1",en_sentencia8)
                               mostrar_c=my_cursor.fetchall()
-                              for a,b,c,d in mostrar_c:
-                                print(a,b,c,d)
+                              
                               if mostrar_c :
                                 print("EXISTE")
                                 folio_cancelar_global=folio_n_cancelar
+                                
                               else:
                                 print("La nota indicada no esta en el sistema o se encuentra cancelada")
-                                break
+                                continue
                           except ValueError:
                             print('el dato debe de ser numerico')
                             continue
@@ -165,61 +203,81 @@ while True:
                             conn.close()
                           try:
                             with sqlite3.connect('TallerMecanico.db') as conn:
-                              my_cursor=conn.cursor()
-                              mostrar_nota_c_detalles={"folio":folio_cancelar_global}
-                              my_cursor.execute("SELECT N.folio,N.fecha,C.nombre,C.rfc, C.correo,SUM(S.precio)AS 'monto a pagar',S.nombre_servicio, N.activo  FROM Notas N INNER JOIN CLIENTE C ON N.clave=C.clave INNER JOIN Detalles D ON D.folio=N.folio  INNER JOIN Servicios S ON S.clave_servicio=D.clave_servicio  WHERE N.folio=:folio AND N.activo=1",mostrar_nota_c_detalles)
-                              mostrar_c=my_cursor.fetchall()
+                              my_cursor = conn.cursor()
+                              print("ENTRO CONSKATSA")
+                                
+                                
+                              mostrar_nota_c_detalles = {"folio": folio_cancelar_global}
+                              my_cursor.execute("""
+                                    SELECT N.folio, N.fecha, C.nombre, C.rfc,
+                                        C.correo, S.precio, S.nombre_servicio
+                                    FROM Notas N
+                                    INNER JOIN CLIENTE C ON N.clave = C.clave
+                                    INNER JOIN Detalles D ON D.folio = N.folio
+                                    INNER JOIN Servicios S ON S.clave_servicio = D.clave_servicio
+                                    WHERE N.folio = :folio AND N.activo = 1
+                                """, mostrar_nota_c_detalles)
+                                
                               print("folio\tfecha\tnombre\trfc\tcorreo\tmonto\tservicios\tactivo")
                               print("-" * 50)
-                              for foliof, fechaf, nombref, correof, rfcf, montof, serviciosf, activof in mostrar_c:
-                                  print(foliof, fechaf, nombref, rfcf, correof, montof, serviciosf, activof)
+                                
+                              mostrar_c = my_cursor.fetchall()
+                              for foliof, fechaf, nombref, rfcf, correof, precio, serviciosf in mostrar_c:
+                                  print(foliof, fechaf, nombref, rfcf, correof, precio, serviciosf)
                           except Error as e:
                               print(e)
                           finally:
-                            conn.close()
-                            while True:
-                                try:
-                                    try:
-                                      confirmacion_cancelar=int(input("Desea cancelar la nota?\n1-Si 2-No: "))
-                                    except ValueError:
-                                        print("Por favor, ingrese un número válido.")
-                                        continue
-                                    with sqlite3.connect("ultimate_test7890.db") as conn:
-                                        my_cursor=conn.cursor()
-                                        if confirmacion_cancelar ==1:
-                                            print("SE VA A CANCELAR LA NOTA")
-                                            cancelar_nota_dicc={"folio":folio_cancelar_global}
-                                            my_cursor.execute("UPDATE Notas SET activo=0 WHERE folio=(:folio);",cancelar_nota_dicc)
-                                            break
-                                        elif confirmacion_cancelar==2:
-                                          print("No se cancelara la nota")
+                              conn.close()
+                          while True:
+                              try:
+                                  try:
+                                    confirmacion_cancelar=int(input("Desea cancelar la nota?\n1-Si 2-No: "))
+                                  except ValueError:
+                                      print("Por favor, ingrese un número válido.")
+                                      continue
+                                  with sqlite3.connect('TallerMecanico.db') as conn:
+                                      my_cursor=conn.cursor()
+                                      if confirmacion_cancelar ==1:
+                                          print("SE VA A CANCELAR LA NOTA")
+                                          cancelar_nota_dicc={"folio":folio_cancelar_global}
+                                          my_cursor.execute("UPDATE Notas SET activo=0 WHERE folio=(:folio);",cancelar_nota_dicc)
                                           break
-                                        elif confirmacion_cancelar>2 or confirmacion_cancelar<1:
-                                          print("Debe ingresar la opcion 1 o 2")
-                                          continue
-                                except Error as e:
-                                  print(e)
-                                except ValueError:
-                                  print("El dato debe de ser numerico")
-                                finally:
-                                  conn.close()
-                                  continue
-                            break
-                        break
+                                      elif confirmacion_cancelar==2:
+                                        print("No se cancelara la nota")
+                                        break
+                                      elif confirmacion_cancelar>2 or confirmacion_cancelar<1:
+                                        print("Debe ingresar la opcion 1 o 2")
+                                        continue
+                              except Error as e:
+                                print(e)
+                              except ValueError:
+                                print("El dato debe de ser numerico")
+                                continue
+                              finally:
+                                conn.close()
+                                break
+                              
+                          break
                     case 3:
                         print("Opción 3 Recuperar una nota")
                         while True:
-                            folio_cancelados=[]
+                            
                             print("Notas Canceladas")
                             try:
                               with sqlite3.connect('TallerMecanico.db') as conn:
                                 my_cursor=conn.cursor()
-                                my_cursor.execute("SELECT T.folio, T.nombre, T.rfc, T.correo, T.fecha, T.[Monto a pagar FROM (SELECT N.folio, C.nombre, C.rfc, C.correo, N.fecha, SUM(S.precio) AS 'Monto a pagar' FROM Notas N INNER JOIN Cliente C ON N.clave = C.clave\
-                                                      INNER JOIN Detalles D ON D.folio = N.folio INNER JOIN Servicios S ON S.clave_servicio = D.clave_servicio WHERE activo = 0 GROUP BY N.folio, C.nombre, C.rfc, C.correo, N.fecha ) AS T")
+                                my_cursor.execute("SELECT N.folio,N.fecha,C.nombre, SUM(S.precio) AS 'monto a pagar'\
+                                                  FROM Notas N INNER JOIN CLIENTE C ON N.clave=C.clave\
+                                                  INNER JOIN Detalles D ON D.folio=N.folio  INNER JOIN Servicios S ON S.clave_servicio=D.clave_servicio  \
+                                                  WHERE N.activo=0")
                                 mostrar_c=my_cursor.fetchall()
-                                for nfolio, cnombre, crfc, ccorreo, nfecha,monto_pagar in mostrar_c:
-                                  print(nfolio, cnombre, crfc, ccorreo, nfecha,monto_pagar)
-                                  folio_cancelados.append(mostrar_c[0][0])
+                                print("-"*40)
+                                print("Folio\tFecha\tNombre\tMonto a pagar")
+                                print("-"*40)
+                                for nfolio,fecha,nombre,monto_a_pagar in mostrar_c:
+                                  print(f"{nfolio}\t{fecha}\t{nombre}\t{monto_a_pagar}")       
+                                print("-"*40)     
+                                                   
                             except Error as e:
                               print(e)
                             finally:
@@ -232,7 +290,7 @@ while True:
                                     continue
                                 if decision_recuperar_nota == 1:
                                       pass
-                                elif decision_recuperar_nota == 2:
+                                elif decision_recuperar_nota == 2: 
                                       break
                                 else:
                                       print("Opción no válida. Por favor, elija 1 o 2.")
@@ -240,7 +298,7 @@ while True:
                                 print("Error: Ingrese un número entero válido (1 o 2).")
                             try:
                               folio_n_cancelar=int(input("Ingrese su folio a recuperar: "))
-                            except ValueError:#falta validar que exista
+                            except ValueError:
                                 print('el dato debe de ser numerico')
                                 continue
                             try:
@@ -248,10 +306,19 @@ while True:
                                 my_cursor=conn.cursor()
                                 consulta_f={"folio":folio_n_cancelar}
                                 my_cursor.execute("SELECT S.nombre_servicio, S.precio FROM Notas N INNER JOIN \
-                                Detalles D ON N.folio=D.folio INNER JOIN Servicios S ON D.clave_servicio=S.clave_servicio WHERE N.folio=:folio ",consulta_f)
+                                Detalles D ON N.folio=D.folio INNER JOIN Servicios S ON D.clave_servicio=S.clave_servicio WHERE N.folio=:folio AND N.activo=0",consulta_f)
                                 muestra_d_detalles=my_cursor.fetchall()
+
+                                if muestra_d_detalles:
+                                  pass
+                                else:
+                                  print("El folio que indico esta fuera del sistema")
+                                  continue
+                                print("Detalles")
+                                print("-"*20)
                                 for name,price in muestra_d_detalles:
-                                  print(name,price)
+                                  print(f"{name}\t{price}")
+                                print("-"*20)
                             except Error as e:
                               print(e)
                             finally:
@@ -275,11 +342,11 @@ while True:
                                 except Error as e:
                                   print(e)
                                 finally:
-                                  conn.close()
+                                  conn.close()                    
                             break
-                        break
+                        
                     case 4:
-                        print("\nConsultas y reportes")
+                        print("\nConsultas y reportes")  
                         while True:
                             print('1. Consulta por periodo\n2. Consulta por folio\n3. Volver al menú principal')
                             try:
@@ -290,14 +357,14 @@ while True:
                             match opcion3:
                                 case 1:
                                     print("Opción 1 Consulta por periodo")
-                                    while True:
+                                    while True:   
                                       try:
                                           fecha_inicio = input("Ingrese la fecha inicial del período, en formato dd/mm/aaaa:\n")
                                           if fecha_inicio.strip() == "":
                                               print("Se tomara la fecha predeterminada como 01/01/2000")
                                               fecha_inicio ="1/1/2000"
                                           fecha_inicio = dt.datetime.strptime(fecha_inicio, "%d/%m/%Y").date()
-                                          if fecha_inicio>fecha_actual:
+                                          if fecha_inicio>fecha_actual:        
                                               print("La fecha que usted ingreso es invalida, su fecha no debe ser posterior a la actual")
                                               continue
                                       except ValueError:
@@ -317,7 +384,10 @@ while True:
                                         with sqlite3.connect('TallerMecanico.db') as conn:
                                           my_cursor=conn.cursor()
                                           diccion_fecha={"fecha_inicial":fecha_inicio,"fecha_final":fecha_final}
-                                          my_cursor.execute("SELECT N.folio, N.fecha, C.nombre, C.rfc, C.correo FROM Notas N INNER JOIN Cliente C ON N.clave=C.clave INNER JOIN Detalles D ON D.folio = N.folio INNER JOIN Servicios S ON D.clave_servicio=S.clave_servicio WHERE N.fecha BETWEEN :fecha_inicial AND :fecha_final AND N.activo=1;",diccion_fecha)
+                                          my_cursor.execute("SELECT N.folio, N.fecha, C.nombre, C.rfc, C.correo \
+                                          FROM Notas N INNER JOIN Cliente C ON N.clave=C.clave INNER JOIN Detalles\
+                                           D ON D.folio = N.folio INNER JOIN Servicios S ON D.clave_servicio=S.clave_servicio\
+                                            WHERE N.fecha BETWEEN :fecha_inicial AND :fecha_final AND N.activo=1;",diccion_fecha)
                                           notas_fechas=my_cursor.fetchall()
                                           print("folio\tfecha\tnombre\trfc\tcorreo\tmonto a pagar")
                                           for a,b,c,d,e in notas_fechas:
@@ -343,8 +413,7 @@ while True:
                                     try:
                                       with sqlite3.connect('TallerMecanico.db') as conn:
                                         my_cursor=conn.cursor()
-                                        my_cursor.execute("SELECT N.folio, N.fecha, C.nombre FROM Notas N INNER \
-                                        JOIN Cliente C ON N.clave=C.clave WHERE activo='1'ORDER BY folio;")
+                                        my_cursor.execute("SELECT N.folio, N.fecha, C.nombre FROM Notas N INNER JOIN Cliente C ON N.clave=C.clave WHERE N.activo=1 ORDER BY N.folio;")
                                         folio_consulta_cursor=my_cursor.fetchall()
                                         print("Folio\tFecha\t\t\tNombre")
                                         print("-" * 45)
@@ -356,7 +425,7 @@ while True:
                                     finally:
                                       conn.close()
                                     while True:
-                                      try:
+                                      try: 
                                         with sqlite3.connect('TallerMecanico.db') as conn:
                                           my_cursor=conn.cursor()
                                           folio_a_consultar=int(input("Ingrese su folio a consultar: "))
@@ -370,13 +439,16 @@ while True:
                                             continue
                                       except Error as e:
                                         print(e)
+                                      except ValueError:
+                                        print("El valor debe de ser numerico")
+                                        continue
                                       finally:
                                         conn.close()
                                       try:
                                         with sqlite3.connect('TallerMecanico.db') as conn:
                                           my_cursor=conn.cursor()
                                           en_sentencia7={"folio":folio_a_consultar}
-                                          my_cursor.execute("SELECT N.folio, N.fecha, C.nombre,C.nombre, C.rfc, C.correo, SUM(S.precio)as 'Monto a pagar' FROM Notas N INNER JOIN Cliente C ON N.clave=C.clave\ INNER JOIN Detalles D ON D.folio = N.folio INNER JOIN Servicios S ON D.clave_servicio=S.clave_servicio WHERE N.folio=:folio",en_sentencia7)
+                                          my_cursor.execute("SELECT N.folio, N.fecha, C.nombre,C.nombre, C.rfc, C.correo, SUM(S.precio)as 'Monto a pagar' FROM Notas N INNER JOIN Cliente C ON N.clave=C.clave INNER JOIN Detalles D ON D.folio = N.folio INNER JOIN Servicios S ON D.clave_servicio=S.clave_servicio WHERE N.folio=:folio",en_sentencia7)
                                           mostrar_c=my_cursor.fetchall()
                                           if mostrar_c:
                                             for folio, fecha, nombre,nombre, rfc, correo,monto in mostrar_c:
@@ -397,7 +469,7 @@ while True:
                                     print("Opción no válida")
                     case 5:
                       break
-        case 2:
+        case 2: 
             while True:
                 print('\nCLIENTES')
                 print('1. Agregar un cliente\n2. Suspender un cliente\n3. Recuperar cliente \n4. Consultas y reportes\n5. Volver al menú principal')
@@ -405,7 +477,7 @@ while True:
                     opcion4 = int(input('Selecciona una opción en el submenú: '))
                 except ValueError:
                     print("Por favor, ingrese un número válido.")
-                    continue
+                    continue 
                 match opcion4:
                     case 1:
                         print("\nAgregar un cliente")
@@ -436,16 +508,19 @@ while True:
                                 print("La dirección de correo electrónico no es válida.")
                         try:
                             with sqlite3.connect("TallerMecanico.db") as conn:
-                                mi_cursor = conn.cursor()
+                                mi_cursor = conn.cursor() 
                                 valores = (nombre_cliente, rfc_usuario, correo, 1 )
                                 mi_cursor.execute("INSERT INTO Cliente (nombre, rfc, correo, activo) VALUES(?,?,?,?)", valores)
+
                         except Error as e:
                             print (e)
                         except:
                             print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
                         finally:
                             conn.close()
+                            print("El cliente se agrego exitosamente.")
                     case 2:
+                        clave_para_suspender_cliente=0
                         print("\nSuspender un cliente")
                         try:
                             with sqlite3.connect("TallerMecanico.db") as conn:
@@ -471,16 +546,19 @@ while True:
                             except ValueError:
                                 print("Por favor, ingrese un número válido.")
                                 continue
-                            if cliente_cancelar>=1:
+                            if cliente_cancelar>=1:  
                                 try:
                                     with sqlite3.connect("TallerMecanico.db") as conn:
-                                        mi_cursor = conn.cursor()
+                                        mi_cursor = conn.cursor()                                
                                         mi_cursor.execute("SELECT * FROM Cliente WHERE clave=?", (cliente_cancelar,))
                                         clientesacancelar= mi_cursor.fetchone()
                                         if clientesacancelar:
                                             print("\nInformacion del cliente")
                                             print(f"Clave: {clientesacancelar[0]}\t Nombre: {clientesacancelar[1]}\t RFC: {clientesacancelar[2]}\tCorreo: {clientesacancelar[3]}")
-                                            break
+                                            clave_para_suspender_cliente=cliente_cancelar
+                                        else:
+                                          print("No hay clave con este numero")
+                                          continue
                                 except Error as e:
                                      print (e)
                                 except:
@@ -490,27 +568,35 @@ while True:
                             else:
                                 print("Ingresa un numero")
                             if cliente_cancelar==0:
-                                break
-                        while True:
-                            try:
+                                break   
+                                
+                            while True:
                                 try:
-                                    des_cliente_cancelar = int(input("\nSi quiere cancelar este cliente precione 1, para volver al menu anterior precione 2 "))
-                                except ValueError:
-                                    print("Por favor, ingrese un número válido.")
-                                    continue
-                                if des_cliente_cancelar==1:
-                                    with sqlite3.connect("TallerMecanico.db") as conn:
-                                            mi_cursor = conn.cursor()
-                                            mi_cursor.execute("UPDATE Cliente SET activo=0 WHERE clave=?", (cliente_cancelar,))
-                                            print("Se cancelo el cliente")
-                                            break
-                            except sqlite3.Error as e:
-                                print(f"Error de SQLite: {e}")
-                            finally:
-                                 conn.close()
-                            if des_cliente_cancelar==2:
-                                break
-
+                                    try:
+                                        des_cliente_cancelar = int(input("\nSi quiere cancelar este cliente precione 1, para volver al menu anterior precione 2 "))
+                                    except ValueError:
+                                        print("Por favor, ingrese un número válido.")
+                                        continue
+                                    if des_cliente_cancelar==1:    
+                                        with sqlite3.connect("TallerMecanico.db") as conn:
+                                                mi_cursor = conn.cursor()
+                                                mi_cursor.execute("UPDATE Cliente SET activo=0 WHERE clave=?", (clave_para_suspender_cliente,))
+                                                print("Se cancelo el cliente")
+                                                break
+                                    elif des_cliente_cancelar==2:
+                                      print("No se canceló el cliente")
+                                      break
+                                    else:
+                                      print("Eliga entre el 1 y el 2")
+                                      continue
+                                except sqlite3.Error as e:
+                                    print(f"Error de SQLite: {e}")
+                                finally:
+                                    conn.close()
+                                if des_cliente_cancelar==2:
+                                    break
+                            break
+                            
                     case 3:
                         print("\n Recuperar cliente")
                         try:
@@ -537,41 +623,50 @@ while True:
                             if cliente_recuperar==0:
                                 break
                             if cliente_recuperar>0:
-                                if cliente_recuperar in clientesactivos:
-                                    try:
-                                        with sqlite3.connect("TallerMecanico.db") as conn:
-                                            mi_cursor = conn.cursor()
-                                            mi_cursor.execute("SELECT * FROM Cliente WHERE clave=?", (cliente_recuperar,))
-                                            clientesarecuperar= mi_cursor.fetchone()
-                                            if clientesarecuperar:
-                                                print("\nInformacion del cliente")
-                                                print(f"Clave: {clientesarecuperar[0]}\t Nombre: {clientesarecuperar[1]}\tRFC: {clientesarecuperar[2]}\tCorreo: {clientesarecuperar[3]}")
-                                    except Error as e:
-                                         print (e)
-                                    except:
-                                         print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
-                                    finally:
-                                        conn.close()
-                                        break
-                            try:
-                                try:
-                                    des_cliente_recuperar = int(input("\nSi quiere recuperar este cliente precione 1, para volver al menu anterior precione 2"))
-                                except ValueError:
-                                    print("Por favor, ingrese un número válido.")
+                                try:    
+                                  with sqlite3.connect("TallerMecanico.db") as conn:
+                                    mi_cursor = conn.cursor()                                
+                                    mi_cursor.execute("SELECT * FROM Cliente WHERE clave=?", (cliente_recuperar,))
+                                    clientesarecuperar= mi_cursor.fetchone()
+                                    if clientesarecuperar:
+                                      print("\nInformacion del cliente")
+                                      print(f"Clave: {clientesarecuperar[0]}\t Nombre: {clientesarecuperar[1]}\tRFC: {clientesarecuperar[2]}\tCorreo: {clientesarecuperar[3]}")
+                                    else:
+                                      print("No hay ningun cliente suspendido con esa clave")
                                     continue
-                                if des_cliente_recuperar==1:
-                                    with sqlite3.connect("TallerMecanico.db") as conn:
-                                            mi_cursor = conn.cursor()
-                                            mi_cursor.execute("UPDATE Cliente SET activo=1 WHERE clave=?", (cliente_recuperar,))
-                                            print("Se recuperado el cliente")
-                                            break
-                                else:
-                                    break
-                            except sqlite3.Error as e:
-                                print(f"Error de SQLite: {e}")
-                            finally:
-                                 conn.close()
+                            
+                                
 
+                                except Error as e:
+                                  print (e)
+                                except:
+                                  print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
+                                finally:
+                                  conn.close()
+                                  break
+                                
+                            if cliente_recuperar<0:
+                              print("Ingrese un numero mayor")
+                              continue   
+                        try:
+                          try:
+                            des_cliente_recuperar = int(input("\nSi quiere recuperar este cliente precione 1, para volver al menu anterior precione 2"))
+                          except ValueError:
+                            print("Por favor, ingrese un número válido.")
+                            continue
+                          if des_cliente_recuperar==1:    
+                            with sqlite3.connect("TallerMecanico.db") as conn:
+                              mi_cursor = conn.cursor()
+                              mi_cursor.execute("UPDATE Cliente SET activo=1 WHERE clave=?", (cliente_recuperar,))
+                              print("Se recuperado el cliente")
+                              break
+                          else:
+                            break
+                        except sqlite3.Error as e:
+                          print(f"Error de SQLite: {e}")
+                        finally:
+                          conn.close()   
+                        
                     case 4:
                         while True:
                             print('')
@@ -621,7 +716,7 @@ while True:
                                                                         print(f"Los datos se han guardado en el archivo CSV '{nombre_archivocsv}'.")
                                                                         break
                                                                     case 2:
-                                                                        nombre_archivo_xlsx = f"ReporteClientesActivosPorClave_{fecha_formateada}.xlsx"
+                                                                        nombre_archivo_xlsx = f"ReporteClientesActivosPorClave_{formato_fecha}.xlsx"
                                                                         workbook = Workbook()
                                                                         sheet = workbook.active
                                                                         sheet.append(['Clave', 'Nombre', 'RFC', 'Correo'])
@@ -633,7 +728,7 @@ while True:
                                                                     case 3:
                                                                         break
                                                                     case _:
-                                                                        print("Opción no válida")
+                                                                        print("Opción no válida")  
                                                         else:
                                                             print(f"No se encuentran clientes")
                                                 except Error as e:
@@ -662,16 +757,16 @@ while True:
                                                                 continue
                                                            match opcionarchivo1:
                                                                 case 1:
-                                                                    nombre_archivocsv = f"ReporteClientesActivosPorNombre_{fecha_actual}.csv"
+                                                                    nombre_archivocsv = f"ReporteClientesActivosPorNombre_{formato_fecha}.csv"
                                                                     with open(nombre_archivocsv, mode='w', newline='') as archivo_csv:
                                                                         escritor_csv = csv.writer(archivo_csv)
                                                                         escritor_csv.writerow(['Clave', 'Nombre', 'RFC', 'Correo'])
                                                                         for fila in clientesactivos:
                                                                             escritor_csv.writerow([fila[0], fila[1], fila[2], fila[3]])
                                                                     print(f"Los datos se han guardado en el archivo CSV '{nombre_archivocsv}'.")
-                                                                    break
+                                                                    break 
                                                                 case 2:
-                                                                    nombre_archivo_xlsx = f"ReporteClientesActivosPorNombre_{fecha_actual}.xlsx"
+                                                                    nombre_archivo_xlsx = f"ReporteClientesActivosPorNombre_{formato_fecha}.xlsx"
                                                                     workbook = Workbook()
                                                                     sheet = workbook.active
                                                                     sheet.append(['Clave', 'Nombre', 'RFC', 'Correo'])
@@ -683,7 +778,7 @@ while True:
                                                                 case 3:
                                                                     break
                                                                 case _:
-                                                                    print("Opción no válida")
+                                                                    print("Opción no válida")    
                                                         else:
                                                             print(f"No se encuentran clientes")
                                                 except Error as e:
@@ -702,7 +797,7 @@ while True:
                                             clave_busqueda = int(input("Ingrese la clave del cliente a buscar: "))
                                         except ValueError:
                                             print("Por favor, ingrese solo números enteros como clave del cliente.")
-                                            continue
+                                            continue 
                                         try:
                                             with sqlite3.connect("TallerMecanico.db") as conn:
                                                 mi_cursor = conn.cursor()
@@ -737,14 +832,14 @@ while True:
                                     except Exception:
                                          print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
                                     finally:
-                                        conn.close()
+                                        conn.close()                        
                                 case 4:
                                     break
                                 case _:
                                     print("Opción no válida")
-
+                                
                     case 5:
-                        break
+                        break  
                     case _:
                         print("Opción no válida")
         case 3:
@@ -788,6 +883,7 @@ while True:
                         finally:
                             conn.close()
                     case 2:
+                      while True:
                         print("\nSuspender un servicio")
                         try:
                             with sqlite3.connect("TallerMecanico.db") as conn:
@@ -813,17 +909,20 @@ while True:
                             except ValueError:
                                 print("Por favor, ingrese un número válido.")
                                 continue
-                            if servicio_cancelar>=1:
+                            if servicio_cancelar>=1:  
                                 try:
                                     with sqlite3.connect("TallerMecanico.db") as conn:
-                                        mi_cursor = conn.cursor()
+                                        mi_cursor = conn.cursor()                                
                                         mi_cursor.execute("SELECT * FROM Servicios WHERE clave_servicio=?", (servicio_cancelar,))
                                         serviciosacancelar= mi_cursor.fetchone()
                                         if serviciosacancelar:
                                             print("\nInformacion del servicio")
                                             print(f"Clave: {serviciosacancelar[0]}\t Nombre: {serviciosacancelar[1]}\t Precio: {serviciosacancelar[2]}")
                                             break
-
+                                        else:
+                                          print("No hay servicio con esta clave")
+                                          continue
+                                  
                                 except Error as e:
                                      print (e)
                                 except:
@@ -833,18 +932,24 @@ while True:
                             else:
                                 break
                         try:
-                            des_servicio_cancelar = int(input("\n Si deseas confirmar la cancelacion preciona 1 \n si deseas volver al menu 2"))
-                            if des_servicio_cancelar==1:
+                            des_servicio_cancelar = int(input("\nSi deseas confirmar la cancelacion presiona 1 \nSi deseas volver al menu 2:  "))
+                            if des_servicio_cancelar==1:    
                                 with sqlite3.connect("TallerMecanico.db") as conn:
                                         mi_cursor = conn.cursor()
                                         mi_cursor.execute("UPDATE Servicios SET activo=0 WHERE clave_servicio=?", (servicio_cancelar,))
                                         print("Se cancelo el servicio")
+
+                            elif des_servicio_cancelar==2:
+                              break
                             else:
-                                break
+                                print("Eliga entre 1 y 2 ")
+
                         except sqlite3.Error as e:
                             print(f"Error de SQLite: {e}")
                         finally:
                              conn.close()
+                             break
+                        break   
                     case 3:
                         print("\n Recuperar servicio")
                         try:
@@ -864,37 +969,51 @@ while True:
                              print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
                         finally:
                             conn.close()
-                        servicios_recuperar = int(input("Ingrese la clave del servicio que quiera recuperar, seleccione 0 si elige no recuperar ninguno"))
-                        if servicios_recuperar>=1:
-                            try:
-                                with sqlite3.connect("TallerMecanico.db") as conn:
-                                    mi_cursor = conn.cursor()
-                                    mi_cursor.execute("SELECT * FROM Servicios WHERE clave_servicio=?", (servicios_recuperar,))
-                                    serviciosarecuperar= mi_cursor.fetchone()
-                                    if serviciosarecuperar:
-                                        print("\nInformacion del cliente")
-                                        print(f"Clave: {serviciosarecuperar[0]}\t Nombre: {serviciosarecuperar[1]}\tPrecio: {serviciosarecuperar[2]}")
-                            except Error as e:
-                                 print (e)
-                            except:
-                                 print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
-                            finally:
-                                conn.close()
-                        else:
-                            break
-                        try:
-                            des_servicio_recuperar = int(input("\nSi quiere recuperar este servicio precione 1, para volver al menu anterior precione 2"))
-                            if des_servicio_recuperar==1:
-                                with sqlite3.connect("TallerMecanico.db") as conn:
-                                        mi_cursor = conn.cursor()
-                                        mi_cursor.execute("UPDATE Servicios SET activo=1 WHERE clave_servicio=?", (servicios_recuperar,))
-                                        print("Se recuperado el servicio")
-                            else:
-                                break
-                        except sqlite3.Error as e:
-                            print(f"Error de SQLite: {e}")
-                        finally:
-                             conn.close()
+                        while True:
+                          try:
+                            servicios_recuperar = int(input("Ingrese la clave del servicio que quiera recuperar, seleccione 0 si elige no recuperar ninguno"))
+                          except ValueError:
+                            print("El dato debe de ser numerico")
+                            continue
+                        
+                          if servicios_recuperar>=1:  
+                              try:
+                                  with sqlite3.connect("TallerMecanico.db") as conn:
+                                      mi_cursor = conn.cursor()                                
+                                      mi_cursor.execute("SELECT * FROM Servicios WHERE clave_servicio=?", (servicios_recuperar,))
+                                      serviciosarecuperar= mi_cursor.fetchone()
+                                      if serviciosarecuperar:
+                                          print("\nInformacion del cliente")
+                                          print(f"Clave: {serviciosarecuperar[0]}\t Nombre: {serviciosarecuperar[1]}\tPrecio: {serviciosarecuperar[2]}")
+                                      else:
+                                        print("Esta clave no existe o no esta registrada")
+                                        continue
+                              
+                              except Error as e:
+                                  print (e)
+                              except:
+                                  print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
+                              finally:
+                                  conn.close()
+                          else:
+                              break
+                          try:
+                              des_servicio_recuperar = int(input("\nSi quiere recuperar este servicio precione 1, para volver al menu anterior precione 2"))
+                              if des_servicio_recuperar==1:    
+                                  with sqlite3.connect("TallerMecanico.db") as conn:
+                                          mi_cursor = conn.cursor()
+                                          mi_cursor.execute("UPDATE Servicios SET activo=1 WHERE clave_servicio=?", (servicios_recuperar,))
+                                          print("Se recuperado el servicio")
+                                          break
+                              else:
+                                  break
+                          except sqlite3.Error as e:
+                              print(f"Error de SQLite: {e}")
+                          except ValueError:
+                            print("El dato debe deser numerico")
+                            continue
+                          finally:
+                              conn.close()   
                     case 4:
                         while True:
                             print('')
@@ -917,35 +1036,39 @@ while True:
                                                   print(f"Clave: {r[0]} \t Nombre: {r[1]} ")
                                           else:
                                               print(f"No se encuentran clientes")
-
-                                      while True:
-                                          servicio_clave = input("Ingresa la clave del servicio que deseas consultar: ")
-                                          if servicio_clave.strip()=="":
-                                            print("El campo no puede estar vacio")
-                                            continue
-                                          elif not servicio_clave.isdigit():
-                                            print("El campo debe tener un numero")
-                                            continue
+                                              continue
+                                    finally:
+                                      conn.close()
+                                          
+                                    while True:
+                                      try:
+                                        servicio_clave = int(input("Ingresa la clave del servicio que deseas consultar: "))
+                                        
+                                      except ValueError:
+                                        print("El valor debe de ser numerico")
+                                        continue
+                                          
+                                      try: 
+                                        with sqlite3.connect("TallerMecanico.db") as conn: 
+                                          mi_cursor=conn.cursor()                           
+                                          mi_cursor.execute("SELECT * FROM Servicios WHERE clave_servicio=?",(servicio_clave,))
+                                          servicio_encontrado=mi_cursor.fetchone()
+                                          if servicio_encontrado:
+                                            print("Servicio Encontrado") 
+                                            print(f"Clave: {servicio_encontrado[0]} \t Nombre: {servicio_encontrado[1]} \t Precio: {servicio_encontrado[2]} ")
+                                        
+                                            break
                                           else:
-
-                                            mi_cursor.execute("SELECT*FROM Servicios WHERE clave_servicio=?",(servicio_clave))
-                                            servicio_encontrado=mi_cursor.fetchone()
-                                            if servicio_encontrado:
-                                              print("Servicio Encontrado")
-                                              print(f"Clave: {servicio_encontrado[0]} \t Nombre: {servicio_encontrado[1]} \t Precio: {servicio_encontrado[2]} ")
-
-                                              break
-                                            else:
-                                                print("El servicio no existe")
-                                                continue
-                                                break
-                                    except sqlite3.Error as e:
+                                              print("El servicio no existe")
+                                              continue 
+                                      except Error as e :
                                         print(e)
-                                    except Exception as e:
-                                        print(f"Se produjo el siguiente error: {e}, vuelve a intentarlo")
+                                      
+                                    
+                        
                                 case 2:
                                     while True:
-                                        servicio_busqueda=input("Ingresa el servicio que deseas consultar : ").lower() #para las mayusculas y minusculas
+                                        servicio_busqueda=input("Ingresa el servicio que deseas consultar : ").lower() #
                                         if servicio_busqueda.strip()=="":
                                             print("El campo no puede quedar vacio")
                                         else:
@@ -956,7 +1079,7 @@ while True:
                                         mi_cursor.execute("SELECT*FROM Servicios WHERE nombre_servicio=?", (servicio_busqueda,))
                                         nombre_servicio=mi_cursor.fetchone()
                                         if nombre_servicio[1]== servicio_busqueda:
-                                          print(f"Servicio Encontrado \n Nombre: {nombre_servicio[1]} \t Precio;  ${nombre_servicio[2]}")
+                                          print(f"Servicio Encontrado \n Nombre: {nombre_servicio[1]} \t Precio:  ${nombre_servicio[2]}")     
                                     except Error as e:
                                         print (e)
                                     except Exception:
@@ -980,7 +1103,7 @@ while True:
                                                        mi_cursor.execute("SELECT * FROM Servicios ORDER BY clave_servicio")
                                                        claves_activas = mi_cursor.fetchall()
                                                        if claves_activas:
-                                                           for fila in claves_activas:
+                                                           for fila in claves_activas:                                                  
                                                                  print(f"{fila[0]:^6}|\t{fila[1]},|\t{fila[2]}")
                                                        while True:
                                                            print('Donde deseas guardar el arvhivo\n 1. CSV \n2. Excel\n3. Salir')
@@ -994,25 +1117,28 @@ while True:
                                                                     nombre_archivocsv= f"ReporteServiciosPorClave_{formato_fecha}.csv"
                                                                     with open(nombre_archivocsv, mode='w', newline='') as archivo_csv:
                                                                         escritor_csv = csv.writer(archivo_csv)
-                                                                        escritor_csv.writerow(['Clave', 'Nombre del Servicio', 'Precio'])
+                                                                        escritor_csv.writerow(['Clave', 'Nombre del Servicio', 'Precio', 'Activo'])
                                                                         for fila in claves_activas:
                                                                             escritor_csv.writerow(fila)
-                                                                        break
+                                                                        print(f"Los datos se han guardado en el archivo :'{nombre_archivo_xlsx}'.csv")                                                                           
+                                                                        break 
                                                                 case 2:
                                                                     nombre_archivo_xlsx = f"ReporteServiciosPorClave_{formato_fecha}.xlsx"
                                                                     workbook = Workbook()
                                                                     sheet = workbook.active
-                                                                    sheet.append(['Clave', 'Nombre del Servicio', 'Precio'])
+                                                                    sheet.append(['Clave', 'Nombre del Servicio', 'Precio','Activo'])
                                                                     for fila in claves_activas:
                                                                         sheet.append(fila)
+
                                                                     workbook.save(nombre_archivo_xlsx)
                                                                     print(f"Los datos se han guardado en el archivo Excel '{nombre_archivo_xlsx}'.")
+                                                                    break
 
                                                                 case 3:
                                                                     break
                                                                 case _:
                                                                     print("Opción no válida")
-
+                                                                    
                                                 except Error as e:
                                                     print (e)
                                                 finally:
@@ -1056,11 +1182,11 @@ while True:
                                                                 case 3:
                                                                     break
                                                                 case _:
-                                                                    print("Opción no válida")
+                                                                    print("Opción no válida")  
                                                 except Error as e:
-                                                    print (e)
+                                                    print (e)     
                                                 finally:
-                                                    conn.close()
+                                                    conn.close()     
                                             case 3:
                                                 break
                                             case _:
@@ -1073,7 +1199,7 @@ while True:
                         break
                     case _:
                         print("Opción no válida")
-        case 4:
+        case 4: 
             while True:
                 print('\nESTADISTICAS\n1. Servicios más prestados\n2. Clientes con más notas\n3. Promdeio de los montos de las notas\n4. Volver al menú principal')
                 try:
@@ -1083,7 +1209,7 @@ while True:
                     continue
                 match opciones:
                     case 1:
-                        while True:   #CONSULTA POR PERIODO
+                        while True:   
                             try:
                                 cantidad_d_servicios_a_mostrar=int(input("¿Cuantos servicios desea consultar?"))
                                 if cantidad_d_servicios_a_mostrar <1:
@@ -1098,7 +1224,7 @@ while True:
                                   print("Se tomara la fecha predeterminada como 01/01/2000")
                                   fecha_inicio ="1/1/2000"
                                 fecha_inicio = dt.datetime.strptime(fecha_inicio, "%d/%m/%Y").date()
-                                if fecha_inicio>fecha_actual:            #SE VERIFICA QUE LA FECHA NO SEA posterior A LA ACTUAL
+                                if fecha_inicio>fecha_actual:            
                                   print("La fecha que usted ingreso es invalida, su fecha no debe ser posterior a la actual")
                                   continue
                             except ValueError:
@@ -1107,7 +1233,7 @@ while True:
 
                             try:
                                 fecha_final = input("Ingrese la fecha final del período, en formato dd/mm/aaaa:\n")
-                                if fecha_final.strip() == "":###validar que sea posterior
+                                if fecha_final.strip() == "":
                                   print("No se ingreso nada, por lo tanto la fecha predetermianda es la fecha actual")
                                   fecha_final =dt.date.today()
                                 else:
@@ -1117,7 +1243,7 @@ while True:
                                 continue
 
                             try:
-                                with sqlite3.connect("TallerMecanico (3).db") as conn:
+                                with sqlite3.connect("TallerMecanico.db") as conn:
                                   my_cursor=conn.cursor()
                                   mayores_servicios={"fechainicio":fecha_inicio,
                                                      "fechafinal":fecha_final,
@@ -1129,7 +1255,7 @@ while True:
                                                       GROUP BY D.clave_servicio\
                                                       ORDER BY D.clave_servicio ASC\
                                                       LIMIT :cantidad_a_mostrar',mayores_servicios)
-
+                                  
                                   muestra=my_cursor.fetchall()
                                   print('Servicio\t Cantidad')
                                   print("-"*30)
@@ -1150,7 +1276,7 @@ while True:
                                                 escritor_csv.writerow(['Servicio', 'Cantidad'])
                                                 for fila in muestra:
                                                     escritor_csv.writerow(fila)
-                                                    break
+                                                break 
                                         case 2:
                                             nombre_archivo_xlsx = f"ReporteServiciosMasPrestados_{fecha_inicio}_{fecha_final}.xlsx"
                                             workbook = Workbook()
@@ -1160,10 +1286,11 @@ while True:
                                                 sheet.append(fila)
                                                 workbook.save(nombre_archivo_xlsx)
                                                 print(f"Los datos se han guardado en el archivo Excel '{nombre_archivo_xlsx}'.")
+                                            break
                                         case 3:
                                             break
                                         case _:
-                                            print("Opción no válida")
+                                            print("Opción no válida")   
                             except Error as e:
                                 print(e)
                             except ValueError:
@@ -1182,7 +1309,7 @@ while True:
                                 print("Se tomara la fecha predeterminada como 01/01/2000")
                                 fecha_inicio ="1/1/2000"
                             fecha_inicio = dt.datetime.strptime(fecha_inicio, "%d/%m/%Y").date()
-                            if fecha_inicio>fecha_actual:
+                            if fecha_inicio>fecha_actual:     
                                 print("La fecha que usted ingreso es invalida, su fecha no debe ser posterior a la actual")
                                 continue
                         except ValueError:
@@ -1226,7 +1353,7 @@ while True:
                                                 escritor_csv.writerow(['Cliente', 'Cantidad'])
                                                 for fila in muestra:
                                                     escritor_csv.writerow(fila)
-                                                    break
+                                                break 
                                         case 2:
                                             nombre_archivo_xlsx = f"ReporteClientesConMasNotas_{fecha_inicio}_{fecha_final}.xlsx"
                                             workbook = Workbook()
@@ -1239,7 +1366,7 @@ while True:
                                         case 3:
                                             break
                                         case _:
-                                            print("Opción no válida")
+                                            print("Opción no válida")                                           
                         except Error as e:
                             print(e)
                         except ValueError:
@@ -1260,9 +1387,9 @@ while True:
                                   continue
                                 fecha_final_estadistica2 = dt.datetime.strptime(fecha_final_estadistica2, "%d/%m/%Y").date()
                                 if fecha_final_estadistica2 < fecha_inicio_estadistica2:
-                                    print("La fecha final debe ser mayor o igual a la fecha inicial.")
-                                    continue
-                                with sqlite3.connect("TallerMecanico (3).db") as conn:
+                                    print("La fecha final debe ser mayor o igual a la fecha inicial.")    
+                                    continue 
+                                with sqlite3.connect("TallerMecanico.db") as conn:
                                   my_cursor=conn.cursor()
                                   prom_montos_nota={"fecha_inicial":fecha_inicio_estadistica2,
                                                     "fecha_final":fecha_final_estadistica2}
@@ -1283,7 +1410,7 @@ while True:
                     case 4:
                         break
                     case _:
-                        print("Opción no válida")
+                        print("Opción no válida")  
         case 5:
             break
         case _:
