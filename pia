@@ -11,12 +11,7 @@ fecha_actual = dt.date.today()
 
 try:
     with sqlite3.connect ('TallerMecanico.db') as conn:
-        mi_cursor=conn.cursor()
-        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Cliente (clave INTEGER PRIMARY KEY, nombre TEXT NOT NULL, rfc TEXT NOT NULL, correo TEXT NOT NULL, activo INTEGER NOT NULL);")
-        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Servicios  (clave_servicio INTEGER PRIMARY KEY, nombre_servicio TEXT NOT NULL, precio INTEGER NOT NULL , activo INTEGER NOT NULL);")
-        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Notas (folio INTEGER PRIMARY KEY, fecha timestamp ,activo INTEGER NOT NULL, clave INTEGER NOT NULL, FOREIGN KEY (clave) REFERENCES Cliente (clave));")
-        mi_cursor.execute("CREATE TABLE IF NOT EXISTS Detalles (folio_detalles INTEGER PRIMARY KEY, clave_servicio INTEGER ,  folio INTEGER ,FOREIGN KEY (clave_servicio) REFERENCES Servicios (clave_servicio),FOREIGN KEY (folio) REFERENCES Notas (folio));")
-except Error as e:
+
     print (e)
 except Exception:
     print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
