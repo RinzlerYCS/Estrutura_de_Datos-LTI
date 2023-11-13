@@ -2,19 +2,7 @@
 import sys
 import sqlite3
 from sqlite3 import Error
-import datetime as dt
-import re
-import csv
-from openpyxl import Workbook
-import pandas as pd
-fecha_actual = dt.date.today()
 
-try:
-    with sqlite3.connect ('TallerMecanico.db') as conn:
-
-    print (e)
-except Exception:
-    print(f"Se produjo el siguiente error: {sys.exc_info()[0]}")
 finally:
     conn.close()
 while True:
