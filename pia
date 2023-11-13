@@ -24,14 +24,7 @@ while True:
     except ValueError:
         print("Por favor, ingrese un número válido.")
         continue
-    match opcion:
-        case 1:
-            while True:
-                print('\nNOTAS\n1. Registrar una nota\n2. Cancelar una nota\n3. Recuperar una nota\n4. Consultas y reportes\n5. Volver al menú principal')
-                try:
-                    opcion2 = int(input('Selecciona una opción en el submenú: '))
-                except ValueError:
-                    print("Por favor, ingrese un número válido.")
+
                     continue
                 match opcion2:
                     case 1:
