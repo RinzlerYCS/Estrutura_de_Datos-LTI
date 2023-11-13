@@ -65,7 +65,7 @@ while True:
                                     my_cursor=conn.cursor()
                                     clave_de_cliente=int(input("Elige una de las claves mostradas: "))
                                     diccionario_cliente={"clave":clave_de_cliente}
-                                    my_cursor.execute("SELECT * FROM Cliente  WHERE clave=:clave ",diccionario_cliente)
+                                    my_cursor.execute("SELECT * FROM Cliente  WHERE clave=:clave AND activo=1",diccionario_cliente)
                                     querie=my_cursor.fetchall()
                                     if querie:
                                         print(f"Si existe este cliente con clave: {clave_de_cliente}")
@@ -1141,7 +1141,7 @@ while True:
                                 continue
 
                             try:
-                                with sqlite3.connect("TallerMecanico (3).db") as conn:
+                                with sqlite3.connect("TallerMecanico.db") as conn:
                                   my_cursor=conn.cursor()
                                   mayores_servicios={"fechainicio":fecha_inicio,
                                                      "fechafinal":fecha_final,
@@ -1286,7 +1286,7 @@ while True:
                                 if fecha_final_estadistica2 < fecha_inicio_estadistica2:
                                     print("La fecha final debe ser mayor o igual a la fecha inicial.")    
                                     continue 
-                                with sqlite3.connect("TallerMecanico (3).db") as conn:
+                                with sqlite3.connect("TallerMecanico.db") as conn:
                                   my_cursor=conn.cursor()
                                   prom_montos_nota={"fecha_inicial":fecha_inicio_estadistica2,
                                                     "fecha_final":fecha_final_estadistica2}
