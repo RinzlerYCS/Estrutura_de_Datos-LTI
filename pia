@@ -8,7 +8,7 @@ import csv
 from openpyxl import Workbook
 import pandas as pd
 fecha_actual = dt.date.today()
-formato_fecha = fecha_actual.strftime("%d_%m_%Y")
+
 try:
     with sqlite3.connect ('TallerMecanico.db') as conn:
         mi_cursor=conn.cursor()
