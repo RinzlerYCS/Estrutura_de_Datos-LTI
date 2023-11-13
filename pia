@@ -1031,6 +1031,118 @@ while True:
                                                                         sheet.append(fila)
                                                                     workbook.save(nombre_archivo_xlsx)
                                                                     print(f"Los datos se han guardado en el archivo Excel '{nombre_archivo_xlsx}'.")
+                    case 4:
+                        while True:
+                            print('')
+                            print('1. Busqueda por clave del servicio\n2. Busqueda por nombre del servicio\n3. Listado de servicios\n4. Volver al menú principal')
+                            try:
+                                opcion8 = int(input('Selecciona una opción en el submenú: '))
+                            except ValueError:
+                                print("Por favor, ingrese solo números enteros como clave del cliente.")
+                                continue
+                            match opcion8:
+                                case 1:
+                                    try:
+                                      with sqlite3.connect("TallerMecanico.db") as conn:
+                                          mi_cursor = conn.cursor()
+                                          mi_cursor.execute("SELECT clave_servicio, nombre_servicio FROM Servicios")
+                                          filas = mi_cursor.fetchall()
+                                          if filas:
+                                              print("Lista de servicios")
+                                              for r in filas:
+                                                  print(f"Clave: {r[0]} \t Nombre: {r[1]} ")
+                                          else:
+                                              print(f"No se encuentran clientes")
+                                          
+                                      while True:
+                                          servicio_clave = input("Ingresa la clave del servicio que deseas consultar: ")
+                                          if servicio_clave.strip()=="":
+                                            print("El campo no puede estar vacio")
+                                            continue
+                                          elif not servicio_clave.isdigit():
+                                            print("El campo debe tener un numero")
+                                            continue
+                                          else:
+                                                                         
+                                            mi_cursor.execute("SELECT*FROM Servicios WHERE clave_servicio=?",(servicio_clave))
+                                            servicio_encontrado=mi_cursor.fetchone()
+                                            if servicio_encontrado:
+                                              print("Servicio Encontrado") 
+                                              print(f"Clave: {servicio_encontrado[0]} \t Nombre: {servicio_encontrado[1]} \t Precio: {servicio_encontrado[2]} ")
+                                        
+                                              break
+                                            else:
+                                                print("El servicio no existe")
+                                                continue 
+                                                break
+                                    except sqlite3.Error as e:
+                                        print(e)
+                                    except Exception as e:
+                                        print(f"Se produjo el siguiente error: {e}, vuelve a intentarlo")
+                                case 2:
+                                    while True:
+                                        servicio_busqueda=input("Ingresa el servicio que deseas consultar : ").lower() #para las mayusculas y minusculas
+                                        if servicio_busqueda.strip()=="":
+                                            print("El campo no puede quedar vacio")
+                                        else:
+                                           break
+                                    try:
+                                      with sqlite3.connect("TallerMecanico.db")as conn:
+                                        mi_cursor = conn.cursor()
+                                        mi_cursor.execute("SELECT*FROM Servicios WHERE nombre_servicio=?", (servicio_busqueda,))
+                                        nombre_servicio=mi_cursor.fetchone()
+                                        if nombre_servicio[1]== servicio_busqueda:
+                                          print(f"Servicio Encontrado \n Nombre: {nombre_servicio[1]} \t Precio;  ${nombre_servicio[2]}")     
+                                    except Error as e:
+                                        print (e)
+                                    except Exception:
+                                          print(f"El servicio que buscas no existe")
+                                    finally:
+                                        conn.close()
+                                        break
+                                case 3:
+                                    while True:
+                                        print('1. Ordenar por clave\n2. Ordenar por nombre del servicio\n3. Volver al menú principal')
+                                        try:
+                                            opcion9 = int(input('Selecciona una opción en el submenú: '))
+                                        except ValueError:
+                                            print("Por favor, ingrese solo números ")
+                                            continue
+                                        match opcion9:
+                                            case 1:
+                                                try:
+                                                   with sqlite3.connect("TallerMecanico.db") as conn:
+                                                       mi_cursor = conn.cursor()
+                                                       mi_cursor.execute("SELECT * FROM Servicios ORDER BY clave_servicio")
+                                                       claves_activas = mi_cursor.fetchall()
+                                                       if claves_activas:
+                                                           for fila in claves_activas:                                                  
+                                                                 print(f"{fila[0]:^6}|\t{fila[1]},|\t{fila[2]}")
+                                                       while True:
+                                                           print('Donde deseas guardar el arvhivo\n 1. CSV \n2. Excel\n3. Salir')
+                                                           try:
+                                                               opcionarchivo = int(input('Selecciona una opción en el submenú: '))
+                                                           except ValueError:
+                                                                print("Por favor, ingrese solo números .")
+                                                                continue
+                                                           match opcionarchivo:
+                                                                case 1:
+                                                                    nombre_archivocsv= f"ReporteServiciosPorClave_{formato_fecha}.csv"
+                                                                    with open(nombre_archivocsv, mode='w', newline='') as archivo_csv:
+                                                                        escritor_csv = csv.writer(archivo_csv)
+                                                                        escritor_csv.writerow(['Clave', 'Nombre del Servicio', 'Precio'])
+                                                                        for fila in claves_activas:
+                                                                            escritor_csv.writerow(fila)
+                                                                        break 
+                                                                case 2:
+                                                                    nombre_archivo_xlsx = f"ReporteServiciosPorClave_{formato_fecha}.xlsx"
+                                                                    workbook = Workbook()
+                                                                    sheet = workbook.active
+                                                                    sheet.append(['Clave', 'Nombre del Servicio', 'Precio'])
+                                                                    for fila in claves_activas:
+                                                                        sheet.append(fila)
+                                                                    workbook.save(nombre_archivo_xlsx)
+                                                                    print(f"Los datos se han guardado en el archivo Excel '{nombre_archivo_xlsx}'.")
 
                                                                 case 3:
                                                                     break
