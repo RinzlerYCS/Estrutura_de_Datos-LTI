@@ -1,4 +1,4 @@
-case 4:
+
             while True:
                 print('\nESTADISTICAS\n1. Servicios más prestados\n2. Clientes con más notas\n3. Promdeio de los montos de las notas\n4. Volver al menú principal')
                 try:
