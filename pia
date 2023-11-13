@@ -7,16 +7,7 @@
                     print("Por favor, ingrese un número válido.")
                     continue
                 match opciones:
-                    case 1:
-                        while True:   #CONSULTA POR PERIODO
-                            try:
-                                cantidad_d_servicios_a_mostrar=int(input("¿Cuantos servicios desea consultar?"))
-                                if cantidad_d_servicios_a_mostrar <1:
-                                  print('Tiene que elegir al menos un valor')
-                                  continue
-                            except ValueError:
-                                print("Tiene que ingresar un dato numerico")
-                                continue
+                    
                             try:
                                 fecha_inicio = input("Ingrese la fecha inicial del período, en formato dd/mm/aaaa:\n")
                                 if fecha_inicio.strip() == "":
